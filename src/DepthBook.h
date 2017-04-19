@@ -39,14 +39,24 @@ private:
 
     int updateCount;
 
-    void remove(int levelIndex, double price)
+    void remove(int level, double price)
     {
-        if ((levelIndex < maxDepthKnown)
+        if ((level < maxDepthKnown)
             && (byPrice.find(price) != byPrice.end())) // validate price exists in map
         {
-            entries.erase(entries.begin() + levelIndex);
+
+            // update top of book delta
+            if (level == 0)
+            {
+                if (this->entries.size()>1)
+                {
+                    this->topOfBookDelta =  entries.at(1)->price; - entries.at(0)->price;
+                }
+            }
+
+            entries.erase(entries.begin() + level);
             byPrice.erase(price);
-            maxDepthKnown--;
+            --maxDepthKnown;
         } else
         {
             std::cout << "Problem detected in depth cache - price level " << price << " does not exist" << std::endl;
@@ -89,7 +99,16 @@ public:
                          << std::endl;
                 } else
                 {
+                    // update top of book delta
+                    if (level == 0)
+                    {
+                        if (this->entries.size()>0)
+                        {
+                            this->topOfBookDelta = price - entries.at(0)->price;
+                        }
+                    }
 
+                    // update book entry
                     // is this inefficient , first creating the entry object and passing it to entries & byPrice
                     auto entry = std::make_shared<PriceEntry>();
                     entry->price = price;
@@ -104,7 +123,7 @@ public:
                     {
                         byPrice.erase(entries[maxDepthSupported]->price);
                         entries.erase(entries.begin() + maxDepthSupported);
-                        maxDepthKnown--;
+                        --maxDepthKnown;
                     }
                     ++updateCount;
                     ++maxDepthKnown;
