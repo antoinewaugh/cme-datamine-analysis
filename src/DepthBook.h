@@ -50,7 +50,7 @@ private:
             {
                 if (this->entries.size()>1)
                 {
-                    this->topOfBookDelta =  entries.at(1)->price; - entries.at(0)->price;
+                    this->topOfBookDelta =  entries.at(1)->price - entries.at(0)->price;
                 }
             }
 
