@@ -33,10 +33,16 @@ private:
     int maxDepthSupported = 10; // move to constructor
     int maxDepthKnown = 0;
 
+    double topOfBookDelta;
+
+    bool isBuy;
+
+    int updateCount;
+
     void remove(int levelIndex, double price)
     {
         if ((levelIndex < maxDepthKnown)
-            && (byPrice.find(price) != byPrice.end()))
+            && (byPrice.find(price) != byPrice.end())) // validate price exists in map
         {
             entries.erase(entries.begin() + levelIndex);
             byPrice.erase(price);
@@ -50,6 +56,18 @@ private:
 
 public:
 
+    DepthList(const bool &isBuy) : maxDepthKnown(0)
+        ,topOfBookDelta(0.0)
+        ,isBuy(isBuy)
+        ,updateCount(0)
+    {}
+
+
+    double getTopOfBookDelta() const
+    {
+        return topOfBookDelta;
+    }
+
     void insert(double price, int quantity, int levelIndex, char updateType)
     {
         int level = levelIndex - 1; // internal level representation has offset of 1
@@ -58,6 +76,7 @@ public:
         if (updateType == MDEntryAction_DELETE)
         {
             remove(level, price);
+            ++updateCount;
         }
         // ADD
         else if (updateType == MDEntryAction_NEW)
@@ -81,18 +100,21 @@ public:
 
                     // implicit removal of last level in book
                     // if size of book has exceeded max due to recent insert
-                    if (entries.size() == 11)
+                    if (entries.size() == maxDepthSupported+1)
                     {
-                        byPrice.erase(entries[10]->price);
-                        entries.erase(entries.begin() + 10);
+                        byPrice.erase(entries[maxDepthSupported]->price);
+                        entries.erase(entries.begin() + maxDepthSupported);
                         maxDepthKnown--;
                     }
-                    maxDepthKnown++;
+                    ++updateCount;
+                    ++maxDepthKnown;
                 }
             } else
             {
-                std::cout << "Trying to insert Depth Item outside the maximum known level of depth: Level=" << levelIndex
-                     << " - Price=" << price << std::endl;
+                std::cout << "Trying to insert Depth Item outside the maximum known level of depth: "
+                          << "Level=" << levelIndex << " - "
+                          << "Price=" << price
+                          << std::endl;
             }
         }
         // CHANGE
@@ -100,10 +122,20 @@ public:
         {
             if (level < maxDepthKnown)
             {
+                // update top of book delta
+                if (level == 0)
+                {
+                    if (this->entries.size()>0)
+                    {
+                        this->topOfBookDelta = price - entries.at(0)->price;
+                    }
+                }
+                // update book entry
                 if (entries[level]->price == price)
                 {
-                    // implicit update of vector.
+                    // implicit update of entry in byPrice map due to shared pointer
                     entries[level]->quantity = quantity;
+                    ++updateCount;
                 } else
                 {
                     std::cout << "Depth Item at given price for modification does not exist : " << price << std::endl ;
@@ -118,6 +150,13 @@ public:
         }
     }
 
+//   std::vector<int> getVolumeDeltas(const DepthList& previousList)
+//    {
+//       // vector<int> deltas(10);
+//
+//
+//    }
+
     const std::vector<std::shared_ptr<PriceEntry>> &getEntries() const
     {
         return entries;
@@ -126,6 +165,16 @@ public:
     int getMaxDepthSupported() const
     {
         return maxDepthSupported;
+    }
+
+    void clear()
+    {
+        updateCount = 0;
+    }
+
+    int getUpdateCount() const
+    {
+        return updateCount;
     }
 
     friend std::ostream &operator<<(std::ostream &os, const DepthList &list)
@@ -146,6 +195,7 @@ public:
             os << ",,";
         }
 
+        os << list.getUpdateCount();
         return os;
     }
 };
@@ -153,6 +203,8 @@ public:
 class TradeList
 {
 private:
+
+    int aggressorSide;
     double min;
     double max;
     int totalVolume;
@@ -166,10 +218,11 @@ public:
         return trades;
     }
 
-    void insert(double price, int quantity)
+    void insert(double price, int quantity, int aggressorSide)
     {
         if (min == 0 || price < min) { min = price; }
         if (max == 0 || price > max) { max = price; }
+        if (aggressorSide != 0) { this->aggressorSide = aggressorSide; }
         totalVolume += quantity;
         trades.push_back(PriceEntry{price, quantity});
 
@@ -178,6 +231,7 @@ public:
 
     void clear()
     {
+        aggressorSide = 0;
         min = 0;
         max = 0;
         count = 0;
@@ -205,9 +259,15 @@ public:
         return totalVolume;
     }
 
+    int getAggressorSide() const
+    {
+        return aggressorSide;
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const TradeList &list)
     {
-        os << list.getCount() << ','
+        os << list.getAggressorSide() << ','
+           << list.getCount() << ','
            << list.getTotalVolume() << ','
            << list.getMinPrice() << ','
            << list.getMaxPrice() << ',';
@@ -237,15 +297,25 @@ private:
 
     DepthList bids;
     DepthList asks;
+    DepthList previousBids;
+    DepthList previousAsks;
     TradeList trades;
+
+    long lastRptSeq;
 
     int securityTradingStatus;
 
-    std::string lastMsg; // for debugging
+//    std::string lastMsg; // for debugging
 
 public:
 
-    DepthBook(const std::string &symbol, const std::string &securityGroup) : symbol(symbol), securityGroup(securityGroup) {}
+    DepthBook(const std::string &symbol, const std::string &securityGroup) : symbol(symbol)
+            , securityGroup(securityGroup)
+            , bids(true)
+            , asks(false)
+            , previousBids(true)
+            , previousAsks(false)
+    {}
 
     const std::string &getTimestamp() const
     {
@@ -257,10 +327,19 @@ public:
         return securityTradingStatus;
     }
 
+    long getLastRptSeq() const
+    {
+        return lastRptSeq;
+    }
+
     bool handleMessage(const std::string& s)
     {
         // Clear previous state
         trades.clear();
+        bids.clear();
+        asks.clear();
+        previousBids = bids;
+        previousAsks = asks;
 
         // Update book
         bool bookUpdated = false;
@@ -282,27 +361,29 @@ public:
                 if (entry.Symbol == this->symbol)
                 {
                     this->timestamp = mdRefresh.TransactTime;
-
                     switch (entry.MDEntryType)
                     {
                         case MDEntryType_BID:
                             bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+                            this->lastRptSeq = entry.RptSeq;
                             bookUpdated = true;
                             break;
 
                         case MDEntryType_OFFER:
                             asks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+                            this->lastRptSeq = entry.RptSeq;
                             bookUpdated = true;
                             break;
 
                         case MDEntryType_TRADE:
-                            trades.insert(entry.MDEntryPx, entry.MDEntrySize);
+                            trades.insert(entry.MDEntryPx, entry.MDEntrySize, entry.AggressorSide);
+                            this->lastRptSeq = entry.RptSeq;
                             bookUpdated = true;
                             break;
                     }
                 }
             }
-            this->lastMsg = s;
+//            this->lastMsg = s;
         }
         return bookUpdated;
     }
@@ -312,9 +393,14 @@ public:
 
         os << book.getTimestamp() << ','
            << book.getSecurityTradingStatus() << ','
-           << book.bids
-           << book.asks
-           << book.trades;
+           << book.bids << ','
+           << book.asks << ','
+           << book.bids.getTopOfBookDelta() << ','
+           << book.asks.getTopOfBookDelta() << ','
+//           << book.bids.getVolumeDeltas(book.previousBids)
+//           << book.asks.getVolumeDeltas(book.previousAsks)
+           << book.trades << ','
+           << book.getLastRptSeq();
 
         return os;
     }

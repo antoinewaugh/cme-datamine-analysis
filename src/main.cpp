@@ -10,6 +10,64 @@
 // * support command line(s)
 // * support maxDepth parameter
 
+void writeHeaders(std::ostream& o)
+{
+    o 
+    << "timestamp, "
+    << "securityStatus, "
+    << "bid1p, " 
+    << "bid1v, "
+    << "bid2p, "
+    << "bid2v, "
+    << "bid3p, "
+    << "bid3v, "
+    << "bid4p, "
+    << "bid4v, "
+    << "bid5p, "
+    << "bid5v, "
+    << "bid6p, "
+    << "bid6v, "
+    << "bid7p, "
+    << "bid7v, "
+    << "bid8p, "
+    << "bid8v, "
+    << "bid9p, "
+    << "bid9v, "
+    << "bid10p, "
+    << "bid10v, "
+    << "bidUpdateCount, "
+    << "ask1p, "
+    << "ask1v, "
+    << "ask2p, "
+    << "ask2v, "
+    << "ask3p, "
+    << "ask3v, "
+    << "ask4p, "
+    << "ask4v, "
+    << "ask5p, "
+    << "ask5v, "
+    << "ask6p, "
+    << "ask6v, "
+    << "ask7p, "
+    << "ask7v, "
+    << "ask8p, "
+    << "ask8v, "
+    << "ask9p, "
+    << "ask9v, "
+    << "ask10p, "
+    << "ask10v, "
+    << "askUpdateCount, "
+    << "tradeAggressorSide, "
+    << "bid1p delta, "
+    << "ask1p delta, "
+    << "tradeCount, "
+    << "tradeTotal, "
+    << "tradeMin, "
+    << "tradeMax, "
+    << "tradeDetails, "
+    << "lastRptSeq, "
+    << std::endl;
+}
 
 int main()
 {
@@ -27,8 +85,11 @@ int main()
 
     DepthBook depthBook("ESM7", "ES"); // construct with a symbol which messages will be matched against
 
-    std::string message;
 
+
+    writeHeaders(std::cout);
+
+    std::string message;
     for (std::string filename : filenames)
     {
 
@@ -36,6 +97,7 @@ int main()
 
         if (file.is_open())
         {
+
             while (std::getline(file, message))
             {
                 {
