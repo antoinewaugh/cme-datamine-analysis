@@ -5,6 +5,8 @@
 #include <fstream>
 #include "DepthBook.h"
 
+
+
 // TODO:
 // * validate start on sunday?
 // * support command line(s)
@@ -71,6 +73,7 @@ void writeHeaders(std::ostream& o)
 
 int main()
 {
+    std::ios_base::sync_with_stdio(false);
 
     // Return non-zero exit code if warnings occur
     // Move this to configuration
@@ -85,31 +88,36 @@ int main()
 
     DepthBook depthBook("ESM7", "ES"); // construct with a symbol which messages will be matched against
 
+    std::string outfilename("/Users/antoinewaugh/Downloads/ESM7_20170402.csv");
+    std::ofstream outfile(outfilename);
 
-
-    writeHeaders(std::cout);
-
-    std::string message;
-    for (std::string filename : filenames)
+    if (outfile.is_open())
     {
+        writeHeaders(outfile);
 
-        std::ifstream file(filename);
-
-        if (file.is_open())
+        std::string message;
+        for (std::string filename : filenames)
         {
 
-            while (std::getline(file, message))
+            std::ifstream file(filename);
+
+            if (file.is_open())
             {
+                while (std::getline(file, message))
                 {
-                    if (depthBook.handleMessage(message))
                     {
-                        // write separate file(s) to disk?
-                        std::cout << depthBook << std::endl;
+                        if (depthBook.handleMessage(message))
+                        {
+                            // write separate file(s) to disk?
+                            outfile << depthBook << '\n'; // prefer \n to std::endl to prevent flush for speed
+                        }
                     }
                 }
             }
             file.close();
         }
+        outfile.flush();
+        outfile.close();
     }
     return 0;
 } // main

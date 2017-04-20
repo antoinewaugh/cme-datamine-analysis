@@ -53,12 +53,12 @@ constexpr char MDEntryAction_NEW = '0';
 constexpr char MDEntryAction_CHANGE = '1';
 constexpr char MDEntryAction_DELETE = '2';
 
-std::vector<std::string> string_split(const std::string &s, const char delimiter)
+void string_split_optim(std::vector<std::string> & output, const std::string &s, const char delimiter)
 {
     size_t start = 0;
     size_t end = s.find_first_of(delimiter);
 
-    std::vector<std::string> output;
+//    std::vector<std::string> output;
 
     while (end <= std::string::npos)
     {
@@ -71,7 +71,7 @@ std::vector<std::string> string_split(const std::string &s, const char delimiter
         end = s.find_first_of(delimiter, start);
     }
 
-    return output;
+//    return output;
 }
 
 class OrderIdEntry
@@ -120,11 +120,17 @@ public:
     int HaltReason;
     int SecurityTradingEvent;
 
-    MDSecurityStatus(const std::string& message)
+    std::vector<std::string> fieldssplit;
+    std::vector<std::string> kv;
+
+    void update(const std::string& message)
     {
-        for (auto fields : string_split(message, FIX_FIELD_DELIMITER))
+
+        string_split_optim(fieldssplit,message, FIX_FIELD_DELIMITER);
+
+        for (auto fields : fieldssplit)
         {
-            std::vector<std::string> kv = string_split(fields, FIX_KEY_DELIMITER);
+            string_split_optim(kv, fields, FIX_KEY_DELIMITER);
 
             // :: MDSecurityStatus
 
@@ -138,8 +144,12 @@ public:
             else if (kv[KEY] == Field_HaltReason) this->HaltReason= stoi(kv[VALUE]);
             else if (kv[KEY] == Field_SecurityTradingEvent) this->SecurityTradingEvent= stoi(kv[VALUE]);
 
+            kv.clear();
         }
+        fieldssplit.clear();
     }
+
+
 };
 
 class MDIncrementalRefresh
@@ -153,16 +163,21 @@ public:
     std::vector<MDEntry> MDEntries;
     std::vector<OrderIdEntry> OrderIdEntries;
 
-    MDIncrementalRefresh(const std::string &message)
+    std::vector<std::string> fieldssplit;
+    std::vector<std::string> kv;
+
+    void update(const std::string &message)
     {
         // Parse String
 
         MDEntry *currentMDEntry = nullptr;
         OrderIdEntry *currentOrderIDEntry = nullptr;
 
-        for (auto fields : string_split(message, FIX_FIELD_DELIMITER))
+        string_split_optim(fieldssplit,message, FIX_FIELD_DELIMITER);
+
+        for (auto fields : fieldssplit)
         {
-            std::vector<std::string> kv = string_split(fields, FIX_KEY_DELIMITER);
+            string_split_optim(kv,fields, FIX_KEY_DELIMITER);
 
             // Header :: MDIncrementalRefresh
 
@@ -204,7 +219,16 @@ public:
                 currentOrderIDEntry = &OrderIdEntries.back();
                 currentOrderIDEntry->OrderID = kv[VALUE];
             } else if (kv[KEY] == Field_LastQty) currentOrderIDEntry->LastQty = stol(kv[VALUE]);
+
+            kv.clear();
         }
+        fieldssplit.clear();
+    }
+
+    void clear()
+    {
+        this->MDEntries.clear();
+        this->OrderIdEntries.clear();
     }
 };
 

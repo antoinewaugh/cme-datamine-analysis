@@ -189,6 +189,7 @@ public:
     void clear()
     {
         updateCount = 0;
+        topOfBookDelta = 0;
     }
 
     int getUpdateCount() const
@@ -324,6 +325,8 @@ private:
 
     int securityTradingStatus;
 
+    MDIncrementalRefresh mdRefresh;
+    MDSecurityStatus mdStatus;
 //    std::string lastMsg; // for debugging
 
 public:
@@ -365,7 +368,7 @@ public:
 
         // FIXME: Move to decoder
         if (s.find("35=f") != std::string::npos) {
-            MDSecurityStatus mdStatus(s);
+            mdStatus.update(s);
             if (mdStatus.SecurityGroup == this->securityGroup) {
                 this->timestamp = mdStatus.TransactTime;
                 this->securityTradingStatus = mdStatus.SecurityTradingStatus;
@@ -374,7 +377,7 @@ public:
         }
         else if (s.find("35=X") != std::string::npos)
         {
-           MDIncrementalRefresh mdRefresh(s);
+           mdRefresh.update(s);
            for (auto entry : mdRefresh.MDEntries)
             {
                 if (entry.Symbol == this->symbol)
@@ -403,6 +406,7 @@ public:
                 }
             }
 //            this->lastMsg = s;
+            mdRefresh.clear();
         }
         return bookUpdated;
     }
