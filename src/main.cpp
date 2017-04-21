@@ -108,8 +108,8 @@ int main()
                     {
                         if (depthBook.handleMessage(message))
                         {
-                            // write separate file(s) to disk?
                             outfile << depthBook << '\n'; // prefer \n to std::endl to prevent flush for speed
+                          //  outfile << message.substr(0,1) << '\n'; // this line demonstrates the delay is in the length of writing to the file. processing the depthbook but not writing to file takes significantly less time..
                         }
                     }
                 }

@@ -33,8 +33,6 @@ private:
     int maxDepthSupported = 10; // move to constructor
     int maxDepthKnown = 0;
 
-    double topOfBookDelta;
-
     bool isBuy;
 
     int updateCount;
@@ -44,16 +42,6 @@ private:
         if ((level < maxDepthKnown)
             && (byPrice.find(price) != byPrice.end())) // validate price exists in map
         {
-
-            // update top of book delta
-            if (level == 0)
-            {
-                if (this->entries.size()>1)
-                {
-                    this->topOfBookDelta =  entries.at(1)->price - entries.at(0)->price;
-                }
-            }
-
             entries.erase(entries.begin() + level);
             byPrice.erase(price);
             --maxDepthKnown;
@@ -63,20 +51,12 @@ private:
         }
     }
 
-
 public:
 
     DepthList(const bool &isBuy) : maxDepthKnown(0)
-        ,topOfBookDelta(0.0)
         ,isBuy(isBuy)
         ,updateCount(0)
     {}
-
-
-    double getTopOfBookDelta() const
-    {
-        return topOfBookDelta;
-    }
 
     void insert(double price, int quantity, int levelIndex, char updateType)
     {
@@ -99,14 +79,6 @@ public:
                          << std::endl;
                 } else
                 {
-                    // update top of book delta
-                    if (level == 0)
-                    {
-                        if (this->entries.size()>0)
-                        {
-                            this->topOfBookDelta = price - entries.at(0)->price;
-                        }
-                    }
 
                     // update book entry
                     // is this inefficient , first creating the entry object and passing it to entries & byPrice
@@ -141,14 +113,7 @@ public:
         {
             if (level < maxDepthKnown)
             {
-                // update top of book delta
-                if (level == 0)
-                {
-                    if (this->entries.size()>0)
-                    {
-                        this->topOfBookDelta = price - entries.at(0)->price;
-                    }
-                }
+
                 // update book entry
                 if (entries[level]->price == price)
                 {
@@ -167,6 +132,15 @@ public:
         {
             std::cout << "Depth Item update type is invalid :" << updateType << std::endl ;
         }
+    }
+
+    double getBestPrice()
+    {
+        if (this->entries.size() > 0)
+        {
+            return entries[0]->price;
+        }
+        return 0;
     }
 
 //   std::vector<int> getVolumeDeltas(const DepthList& previousList)
@@ -189,7 +163,6 @@ public:
     void clear()
     {
         updateCount = 0;
-        topOfBookDelta = 0;
     }
 
     int getUpdateCount() const
@@ -317,8 +290,10 @@ private:
 
     DepthList bids;
     DepthList asks;
-    DepthList previousBids;
-    DepthList previousAsks;
+
+    double bid1pDelta;
+    double ask1pDelta;
+
     TradeList trades;
 
     long lastRptSeq;
@@ -335,8 +310,6 @@ public:
             , securityGroup(securityGroup)
             , bids(true)
             , asks(false)
-            , previousBids(true)
-            , previousAsks(false)
     {}
 
     const std::string &getTimestamp() const
@@ -360,8 +333,6 @@ public:
         trades.clear();
         bids.clear();
         asks.clear();
-        previousBids = bids;
-        previousAsks = asks;
 
         // Update book
         bool bookUpdated = false;
@@ -377,7 +348,11 @@ public:
         }
         else if (s.find("35=X") != std::string::npos)
         {
-           mdRefresh.update(s);
+            mdRefresh.update(s);
+
+            double prevBid1p = bids.getBestPrice();
+            double prevAsk1p = asks.getBestPrice();
+
            for (auto entry : mdRefresh.MDEntries)
             {
                 if (entry.Symbol == this->symbol)
@@ -405,7 +380,14 @@ public:
                     }
                 }
             }
-//            this->lastMsg = s;
+
+            // update top of book deltas
+            // this needs to be done external to the depthbook as the book us unaware of
+            // how many mdEntries are in a single MDIncrementalRefresh
+
+            this->bid1pDelta = bids.getBestPrice() - prevBid1p;
+            this->ask1pDelta = asks.getBestPrice() - prevAsk1p;
+
             mdRefresh.clear();
         }
         return bookUpdated;
@@ -418,8 +400,8 @@ public:
            << book.getSecurityTradingStatus() << ','
            << book.bids << ','
            << book.asks << ','
-           << book.bids.getTopOfBookDelta() << ','
-           << book.asks.getTopOfBookDelta() << ','
+           << book.bid1pDelta << ','
+           << book.ask1pDelta << ','
 //           << book.bids.getVolumeDeltas(book.previousBids)
 //           << book.asks.getVolumeDeltas(book.previousAsks)
            << book.trades << ','
