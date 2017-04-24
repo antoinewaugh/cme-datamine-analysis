@@ -30,125 +30,23 @@ private:
     std::vector<std::shared_ptr<PriceEntry> > entries;
     std::map<double, std::shared_ptr<PriceEntry>> byPrice;
 
-    int maxDepthSupported = 10; // move to constructor
+    int maxDepthSupported = 10; // mve to constructor
     int maxDepthKnown = 0;
 
     bool isBuy;
 
     int updateCount;
 
-    void remove(int level, double price)
-    {
-        if ((level < maxDepthKnown)
-            && (byPrice.find(price) != byPrice.end())) // validate price exists in map
-        {
-            entries.erase(entries.begin() + level);
-            byPrice.erase(price);
-            --maxDepthKnown;
-        } else
-        {
-            std::cout << "Problem detected in depth cache - price level " << price << " does not exist" << std::endl;
-        }
-    }
+    void remove(int, double);
 
 public:
 
-    DepthList(const bool &isBuy) : maxDepthKnown(0)
-        ,isBuy(isBuy)
-        ,updateCount(0)
-    {}
+    DepthList( const bool & ); // simple constructor
+    DepthList( const DepthList & ); // copy constructor
+    DepthList & operator=(const DepthList &rhs); // assignment operator
 
-    void insert(double price, int quantity, int levelIndex, char updateType)
-    {
-        int level = levelIndex - 1; // internal level representation has offset of 1
-
-        // REMOVE
-        if (updateType == MDEntryAction_DELETE)
-        {
-            remove(level, price);
-            ++updateCount;
-        }
-        // ADD
-        else if (updateType == MDEntryAction_NEW)
-        {
-            if (level < maxDepthKnown + 1)
-            {
-                if ((level < maxDepthKnown) && (entries[level]->price == price))
-                {
-                    std::cout << "Depth Item at new price already exists: Level=" << level << " - Price=" << price
-                         << std::endl;
-                } else
-                {
-
-                    // update book entry
-                    // is this inefficient , first creating the entry object and passing it to entries & byPrice
-                    auto entry = std::make_shared<PriceEntry>();
-                    entry->price = price;
-                    entry->quantity = quantity;
-
-                    entries.insert(entries.begin() + level, entry);
-                    byPrice[price] = entry;
-
-                    // implicit removal of last level in book
-                    // if size of book has exceeded max due to recent insert
-                    if (entries.size() == maxDepthSupported+1)
-                    {
-                        byPrice.erase(entries[maxDepthSupported]->price);
-                        entries.erase(entries.begin() + maxDepthSupported);
-                        --maxDepthKnown;
-                    }
-                    ++updateCount;
-                    ++maxDepthKnown;
-                }
-            } else
-            {
-                std::cout << "Trying to insert Depth Item outside the maximum known level of depth: "
-                          << "Level=" << levelIndex << " - "
-                          << "Price=" << price
-                          << std::endl;
-            }
-        }
-        // CHANGE
-        else if (updateType == MDEntryAction_CHANGE)
-        {
-            if (level < maxDepthKnown)
-            {
-
-                // update book entry
-                if (entries[level]->price == price)
-                {
-                    // implicit update of entry in byPrice map due to shared pointer
-                    entries[level]->quantity = quantity;
-                    ++updateCount;
-                } else
-                {
-                    std::cout << "Depth Item at given price for modification does not exist : " << price << std::endl ;
-                }
-            } else
-            {
-                std::cout << "Depth Item at given price for modification does not exist : " << price << std::endl ;
-            }
-        } else
-        {
-            std::cout << "Depth Item update type is invalid :" << updateType << std::endl ;
-        }
-    }
-
-    double getBestPrice()
-    {
-        if (this->entries.size() > 0)
-        {
-            return entries[0]->price;
-        }
-        return 0;
-    }
-
-//   std::vector<int> getVolumeDeltas(const DepthList& previousList)
-//    {
-//       // vector<int> deltas(10);
-//
-//
-//    }
+    void insert(double , int , int , char );
+    PriceEntry getBestEntry();
 
     const std::vector<std::shared_ptr<PriceEntry>> &getEntries() const
     {
@@ -211,26 +109,8 @@ public:
         return trades;
     }
 
-    void insert(double price, int quantity, int aggressorSide)
-    {
-        if (min == 0 || price < min) { min = price; }
-        if (max == 0 || price > max) { max = price; }
-        if (aggressorSide != 0) { this->aggressorSide = aggressorSide; }
-        totalVolume += quantity;
-        trades.push_back(PriceEntry{price, quantity});
-
-        ++count;
-    }
-
-    void clear()
-    {
-        aggressorSide = 0;
-        min = 0;
-        max = 0;
-        count = 0;
-        totalVolume = 0;
-        trades.clear();
-    }
+    void insert(double, int , int );
+    void clear();
 
     double getMinPrice() const
     {
@@ -294,6 +174,9 @@ private:
     double bid1pDelta;
     double ask1pDelta;
 
+    double bid1vDelta;
+    double ask1vDelta;
+
     TradeList trades;
 
     long lastRptSeq;
@@ -302,7 +185,6 @@ private:
 
     MDIncrementalRefresh mdRefresh;
     MDSecurityStatus mdStatus;
-//    std::string lastMsg; // for debugging
 
 public:
 
@@ -310,7 +192,13 @@ public:
             , securityGroup(securityGroup)
             , bids(true)
             , asks(false)
-    {}
+            , bid1pDelta(0)
+            , ask1pDelta(0)
+            , bid1vDelta(0)
+            , ask1vDelta(0)
+    {
+
+    }
 
     const std::string &getTimestamp() const
     {
@@ -327,71 +215,7 @@ public:
         return lastRptSeq;
     }
 
-    bool handleMessage(const std::string& s)
-    {
-        // Clear previous state
-        trades.clear();
-        bids.clear();
-        asks.clear();
-
-        // Update book
-        bool bookUpdated = false;
-
-        // FIXME: Move to decoder
-        if (s.find("35=f") != std::string::npos) {
-            mdStatus.update(s);
-            if (mdStatus.SecurityGroup == this->securityGroup) {
-                this->timestamp = mdStatus.TransactTime;
-                this->securityTradingStatus = mdStatus.SecurityTradingStatus;
-                bookUpdated = true;
-            }
-        }
-        else if (s.find("35=X") != std::string::npos)
-        {
-            mdRefresh.update(s);
-
-            double prevBid1p = bids.getBestPrice();
-            double prevAsk1p = asks.getBestPrice();
-
-           for (auto entry : mdRefresh.MDEntries)
-            {
-                if (entry.Symbol == this->symbol)
-                {
-                    this->timestamp = mdRefresh.TransactTime;
-                    switch (entry.MDEntryType)
-                    {
-                        case MDEntryType_BID:
-                            bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
-                            this->lastRptSeq = entry.RptSeq;
-                            bookUpdated = true;
-                            break;
-
-                        case MDEntryType_OFFER:
-                            asks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
-                            this->lastRptSeq = entry.RptSeq;
-                            bookUpdated = true;
-                            break;
-
-                        case MDEntryType_TRADE:
-                            trades.insert(entry.MDEntryPx, entry.MDEntrySize, entry.AggressorSide);
-                            this->lastRptSeq = entry.RptSeq;
-                            bookUpdated = true;
-                            break;
-                    }
-                }
-            }
-
-            // update top of book deltas
-            // this needs to be done external to the depthbook as the book us unaware of
-            // how many mdEntries are in a single MDIncrementalRefresh
-
-            this->bid1pDelta = bids.getBestPrice() - prevBid1p;
-            this->ask1pDelta = asks.getBestPrice() - prevAsk1p;
-
-            mdRefresh.clear();
-        }
-        return bookUpdated;
-    }
+    bool handleMessage(const std::string& );
 
     friend std::ostream &operator<<(std::ostream &os, const DepthBook &book)
     {
@@ -402,6 +226,8 @@ public:
            << book.asks << ','
            << book.bid1pDelta << ','
            << book.ask1pDelta << ','
+           << book.bid1vDelta << ','
+           << book.ask1vDelta << ','
 //           << book.bids.getVolumeDeltas(book.previousBids)
 //           << book.asks.getVolumeDeltas(book.previousAsks)
            << book.trades << ','

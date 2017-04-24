@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include "DepthBook.h"
-
+#include <gtest/gtest.h>
 
 
 // TODO:
@@ -14,10 +14,10 @@
 
 void writeHeaders(std::ostream& o)
 {
-    o 
+    o
     << "timestamp, "
     << "securityStatus, "
-    << "bid1p, " 
+    << "bid1p, "
     << "bid1v, "
     << "bid2p, "
     << "bid2v, "
@@ -59,8 +59,10 @@ void writeHeaders(std::ostream& o)
     << "ask10p, "
     << "ask10v, "
     << "askUpdateCount, "
-    << "bid1p delta, "
-    << "ask1p delta, "
+    << "bid1pDelta, "
+    << "ask1pDelta, "
+    << "bid1vDelta, "
+    << "ask1vDelta, "
     << "tradeAggressorSide, "
     << "tradeCount, "
     << "tradeTotal, "
@@ -77,7 +79,7 @@ int main()
 
     // Return non-zero exit code if warnings occur
     // Move this to configuration
-    std::vector<std::string> filenames = {
+    auto filenames = {
             "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170402-r-00365",
             "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170403-r-00365",
             "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170404-r-00365",
@@ -96,9 +98,8 @@ int main()
         writeHeaders(outfile);
 
         std::string message;
-        for (std::string filename : filenames)
+        for (auto filename : filenames)
         {
-
             std::ifstream file(filename);
 
             if (file.is_open())
@@ -122,4 +123,9 @@ int main()
     return 0;
 } // main
 
+//int main(int argc, char **argv) {
+//    ::testing::InitGoogleTest(&argc, argv);
+//    return RUN_ALL_TESTS();
+//}
+//
 
