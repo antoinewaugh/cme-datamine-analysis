@@ -6,17 +6,12 @@
 #include "DepthBook.h"
 #include <gtest/gtest.h>
 
-
-// TODO:
-// * validate start on sunday?
-// * support command line(s)
-// * support maxDepth parameter
-
 void writeHeaders(std::ostream& o)
 {
     o
     << "timestamp, "
     << "securityStatus, "
+    << "matchEventIndicator, "
     << "bid1p, "
     << "bid1v, "
     << "bid2p, "
@@ -73,24 +68,24 @@ void writeHeaders(std::ostream& o)
     << std::endl;
 }
 
-int main()
+void usage()
 {
-    std::ios_base::sync_with_stdio(false);
+    {
+        std::cout << "depthbook-constructor v1.0 \n\n" \
+                     "usage: depthbook-constructor symbol product sourcefile1 sourcefile2... \n\n" \
+                     "output: symbol.csv \n\n" \
+                     "sample: ls /path/to/cme-datapoint-files | xargs ./depthbook-constructor ESM7 ES" << std::endl;
+    }
+}
 
-    // Return non-zero exit code if warnings occur
-    // Move this to configuration
-    auto filenames = {
-            "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170402-r-00365",
-            "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170403-r-00365",
-            "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170404-r-00365",
-            "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170405-r-00365",
-            "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170406-r-00365",
-            "/Users/antoinewaugh/ClionProjects/untitled/raw/xcme_md_es_fut_20170407-r-00365"
-    };
 
-    DepthBook depthBook("ESM7", "ES"); // construct with a symbol which messages will be matched against
+int process(std::string symbol, std::string product, std::vector<std::string> filenames )
+{
+    // make map: product, vector<DepthBook>
+    // if 55 = chain
+    DepthBook depthBook(symbol, product); // construct with a symbol which messages will be matched against
 
-    std::string outfilename("/Users/antoinewaugh/Downloads/ESM7_20170402.csv");
+    std::string outfilename(symbol + ".csv");
     std::ofstream outfile(outfilename);
 
     if (outfile.is_open())
@@ -104,13 +99,13 @@ int main()
 
             if (file.is_open())
             {
+                std::cout << "Opening : " << filename << std::endl;
                 while (std::getline(file, message))
                 {
                     {
                         if (depthBook.handleMessage(message))
                         {
                             outfile << depthBook << '\n'; // prefer \n to std::endl to prevent flush for speed
-                          //  outfile << message.substr(0,1) << '\n'; // this line demonstrates the delay is in the length of writing to the file. processing the depthbook but not writing to file takes significantly less time..
                         }
                     }
                 }
@@ -121,11 +116,28 @@ int main()
         outfile.close();
     }
     return 0;
-} // main
+}
 
-//int main(int argc, char **argv) {
-//    ::testing::InitGoogleTest(&argc, argv);
-//    return RUN_ALL_TESTS();
-//}
-//
+int main(int argc, char* argv[])
+{
+    std::ios_base::sync_with_stdio(false);
+
+    if (argc < 4)
+    {
+        usage();
+        return 1;
+    }
+
+    std::string symbol(argv[1]);
+    std::string product(argv[2]);
+
+    std::vector<std::string> filenames(argc-3);
+    for(int i = 3; i < argc; ++i )
+    {
+        filenames.push_back(std::string(argv[i]));
+    }
+
+    return process(symbol, product, filenames);
+
+} // main
 

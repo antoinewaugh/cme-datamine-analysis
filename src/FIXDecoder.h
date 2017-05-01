@@ -45,9 +45,13 @@ extern const std::string Field_LastQty;
 extern const std::string Field_SettlPriceType;
 extern const std::string Field_HaltReason;
 
+constexpr int Status_NotAvailableForTrading = 18;
+
 constexpr char MDEntryType_BID = '0';
 constexpr char MDEntryType_OFFER = '1';
 constexpr char MDEntryType_TRADE = '2';
+constexpr char MDEntryType_IMPLIED_BID = 'E';
+constexpr char MDEntryType_IMPLIED_OFFER = 'F';
 
 constexpr char MDEntryAction_NEW = '0';
 constexpr char MDEntryAction_CHANGE = '1';

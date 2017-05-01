@@ -58,6 +58,13 @@ public:
         return maxDepthSupported;
     }
 
+    void reset()
+    {
+        entries.clear();
+        maxDepthKnown = 0;
+        clear();
+    }
+
     void clear()
     {
         updateCount = 0;
@@ -167,6 +174,11 @@ private:
 
     std::string symbol;
     std::string securityGroup;
+    std::string matchEventIndicator;
+public:
+    const std::string &getMatchEventIndicator() const;
+
+private:
 
     DepthList bids;
     DepthList asks;
@@ -222,6 +234,7 @@ public:
 
         os << book.getTimestamp() << ','
            << book.getSecurityTradingStatus() << ','
+           << book.getMatchEventIndicator() << ','
            << book.bids << ','
            << book.asks << ','
            << book.bid1pDelta << ','

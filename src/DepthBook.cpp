@@ -167,10 +167,15 @@ bool DepthBook::handleMessage(const std::string& s)
     if (s.find("35=f") != std::string::npos) {
         mdStatus.update(s);
         if (mdStatus.SecurityGroup == this->securityGroup) {
+
+
             this->timestamp = mdStatus.TransactTime;
             this->securityTradingStatus = mdStatus.SecurityTradingStatus;
+            this->matchEventIndicator = mdStatus.MatchEventIndicator;
+
             bookUpdated = true;
         }
+
     }
     else if (s.find("35=X") != std::string::npos)
     {
@@ -191,8 +196,19 @@ bool DepthBook::handleMessage(const std::string& s)
             if (entry.Symbol == this->symbol)
             {
                 this->timestamp = mdRefresh.TransactTime;
+                this->matchEventIndicator = mdRefresh.MatchEventIndicator;
+
+                // remove book state when market transitions over weekend
+                if (this->lastRptSeq > entry.RptSeq)
+                {
+                    trades.clear();
+                    bids.reset();
+                    asks.reset();
+                }
+
                 switch (entry.MDEntryType)
                 {
+
                     case MDEntryType_BID:
                         bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
                         this->lastRptSeq = entry.RptSeq;
@@ -204,6 +220,18 @@ bool DepthBook::handleMessage(const std::string& s)
                         this->lastRptSeq = entry.RptSeq;
                         bookUpdated = true;
                         break;
+
+//                    case MDEntryType_IMPLIED_BID:
+//                        bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+//                        this->lastRptSeq = entry.RptSeq;
+//                        bookUpdated = true;
+//                        break;
+//
+//                    case MDEntryType_IMPLIED_OFFER:
+//                        asks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+//                        this->lastRptSeq = entry.RptSeq;
+//                        bookUpdated = true;
+//                        break;
 
                     case MDEntryType_TRADE:
                         trades.insert(entry.MDEntryPx, entry.MDEntrySize, entry.AggressorSide);
@@ -229,5 +257,10 @@ bool DepthBook::handleMessage(const std::string& s)
         mdRefresh.clear();
     }
     return bookUpdated;
+}
+
+const std::string &DepthBook::getMatchEventIndicator() const
+{
+    return matchEventIndicator;
 }
 
