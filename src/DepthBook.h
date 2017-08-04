@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include <ostream>
 #include "FIXDecoder.h"
 
@@ -199,7 +200,6 @@ private:
     MDSecurityStatus mdStatus;
 
 public:
-
     DepthBook(const std::string &symbol, const std::string &securityGroup) : symbol(symbol)
             , securityGroup(securityGroup)
             , bids(true)
@@ -211,7 +211,15 @@ public:
     {
 
     }
-
+    DepthBook()
+        :symbol("")
+        , securityGroup("")
+        , bids(true)
+        , asks(false)
+        , bid1pDelta(0)
+        , ask1pDelta(0)
+        , bid1vDelta(0)
+        , ask1vDelta(0) {}
     const std::string &getTimestamp() const
     {
         return timestamp;

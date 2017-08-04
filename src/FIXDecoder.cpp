@@ -140,3 +140,24 @@ void MDIncrementalRefresh::clear()
     this->MDEntries.clear();
     this->OrderIdEntries.clear();
 }
+
+
+void MDInstrument::update(const std::string &message)
+{
+  // Parse String
+  string_split_optim(fieldssplit,message, FIX_FIELD_DELIMITER);
+
+  for (auto fields : fieldssplit)
+  {
+    string_split_optim(kv,fields, FIX_KEY_DELIMITER);
+
+    // Header :: MDIncrementalRefresh
+
+    if (kv[KEY] == Field_Symbol) this->Symbol = kv[VALUE];
+    else if (kv[KEY] == Field_ApplID) this->SecurityGroup= stoi(kv[VALUE]);
+
+    kv.clear();
+  }
+  fieldssplit.clear();
+}
+

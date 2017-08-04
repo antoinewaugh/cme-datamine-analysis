@@ -1,5 +1,7 @@
 
 #include <iostream>
+#include <memory>
+
 #include "DepthBook.h"
 
 
@@ -63,7 +65,7 @@ void DepthList::insert(double price, int quantity, int levelIndex, char updateTy
         {
             if ((level < maxDepthKnown) && (entries[level]->price == price))
             {
-                std::cout << "Depth Item at new price already exists: Level=" << level << " - Price=" << price
+              std::cout  << "Depth Item at new price already exists: Level=" << level << " - Price=" << price
                           << std::endl;
             } else
             {

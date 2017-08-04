@@ -112,6 +112,19 @@ public:
 
 };
 
+struct MDInstrument
+{
+public:
+
+    std::string SecurityGroup;
+    std::string Symbol;
+
+    std::vector<std::string> fieldssplit;
+    std::vector<std::string> kv;
+
+    void update(const std::string& );
+};
+
 class MDIncrementalRefresh
 {
 
