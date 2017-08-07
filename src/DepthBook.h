@@ -5,31 +5,28 @@
 #ifndef DEPTHBOOK_H
 #define DEPTHBOOK_H
 
-#include <vector>
+#include "FIXDecoder.h"
 #include <map>
 #include <memory>
 #include <ostream>
-#include "FIXDecoder.h"
+#include <vector>
 
-struct PriceEntry
-{
+struct PriceEntry {
     double price;
     int quantity;
 
-    friend std::ostream &operator<<(std::ostream &os, const PriceEntry &entry)
+    friend std::ostream& operator<<(std::ostream& os, const PriceEntry& entry)
     {
         os << entry.price << ',' << entry.quantity;
         return os;
     }
 };
 
-class DepthList
-{
+class DepthList {
 
 private:
-
     std::vector<std::shared_ptr<PriceEntry> > entries;
-    std::map<double, std::shared_ptr<PriceEntry>> byPrice;
+    std::map<double, std::shared_ptr<PriceEntry> > byPrice;
 
     int maxDepthSupported = 10; // mve to constructor
     int maxDepthKnown = 0;
@@ -41,15 +38,14 @@ private:
     void remove(int, double);
 
 public:
+    DepthList(const bool&); // simple constructor
+    DepthList(const DepthList&); // copy constructor
+    DepthList& operator=(const DepthList& rhs); // assignment operator
 
-    DepthList( const bool & ); // simple constructor
-    DepthList( const DepthList & ); // copy constructor
-    DepthList & operator=(const DepthList &rhs); // assignment operator
-
-    void insert(double , int , int , char );
+    void insert(double, int, int, char);
     PriceEntry getBestEntry();
 
-    const std::vector<std::shared_ptr<PriceEntry>> &getEntries() const
+    const std::vector<std::shared_ptr<PriceEntry> >& getEntries() const
     {
         return entries;
     }
@@ -76,21 +72,19 @@ public:
         return updateCount;
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const DepthList &list)
+    friend std::ostream& operator<<(std::ostream& os, const DepthList& list)
     {
         // Output in CSV
         // Column count needs to be constant to avoid misaligns
 
         int count = 0;
-        for (auto &&entry : list.getEntries())
-        {
+        for (auto&& entry : list.getEntries()) {
             os << *entry << ',';
             ++count;
         }
 
         // Fill blank columns if book size < max depth
-        for(int i=list.getMaxDepthSupported()-count-1; i >= 0;--i)
-        {
+        for (int i = list.getMaxDepthSupported() - count - 1; i >= 0; --i) {
             os << ",,";
         }
 
@@ -99,10 +93,8 @@ public:
     }
 };
 
-class TradeList
-{
+class TradeList {
 private:
-
     int aggressorSide;
     double min;
     double max;
@@ -111,13 +103,12 @@ private:
     std::vector<PriceEntry> trades;
 
 public:
-
-    const std::vector<PriceEntry> &getTrades() const
+    const std::vector<PriceEntry>& getTrades() const
     {
         return trades;
     }
 
-    void insert(double, int , int );
+    void insert(double, int, int);
     void clear();
 
     double getMinPrice() const
@@ -145,7 +136,7 @@ public:
         return aggressorSide;
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const TradeList &list)
+    friend std::ostream& operator<<(std::ostream& os, const TradeList& list)
     {
         os << list.getAggressorSide() << ','
            << list.getCount() << ','
@@ -155,34 +146,35 @@ public:
 
         int remaining = list.getTrades().size();
 
-        for (auto &&item : list.getTrades())
-        {
+        for (auto&& item : list.getTrades()) {
             os << item.quantity << '@' << item.price;
             --remaining;
-            if (remaining>0) { os << '|'; }
+            if (remaining > 0) {
+                os << '|';
+            }
         }
         return os;
     }
-
 };
 
-class DepthBook
-{
+class DepthBook {
 
 private:
-
     std::string timestamp;
 
     std::string symbol;
     std::string securityGroup;
     std::string matchEventIndicator;
+
 public:
-    const std::string &getMatchEventIndicator() const;
+    const std::string& getMatchEventIndicator() const;
 
 private:
-
     DepthList bids;
     DepthList asks;
+
+    DepthList implBids;
+    DepthList implAsks;
 
     double bid1pDelta;
     double ask1pDelta;
@@ -196,31 +188,40 @@ private:
 
     int securityTradingStatus;
 
+    void clearFlags();
+    void resetState();
+
     MDIncrementalRefresh mdRefresh;
     MDSecurityStatus mdStatus;
 
 public:
-    DepthBook(const std::string &symbol, const std::string &securityGroup) : symbol(symbol)
-            , securityGroup(securityGroup)
-            , bids(true)
-            , asks(false)
-            , bid1pDelta(0)
-            , ask1pDelta(0)
-            , bid1vDelta(0)
-            , ask1vDelta(0)
-    {
-
-    }
-    DepthBook()
-        :symbol("")
-        , securityGroup("")
+    DepthBook(const std::string& symbol, const std::string& securityGroup)
+        : symbol(symbol)
+        , securityGroup(securityGroup)
         , bids(true)
         , asks(false)
+        , implBids(true)
+        , implAsks(false)
         , bid1pDelta(0)
         , ask1pDelta(0)
         , bid1vDelta(0)
-        , ask1vDelta(0) {}
-    const std::string &getTimestamp() const
+        , ask1vDelta(0)
+    {
+    }
+    DepthBook()
+        : symbol("")
+        , securityGroup("")
+        , bids(true)
+        , asks(false)
+        , implBids(true)
+        , implAsks(false)
+        , bid1pDelta(0)
+        , ask1pDelta(0)
+        , bid1vDelta(0)
+        , ask1vDelta(0)
+    {
+    }
+    const std::string& getTimestamp() const
     {
         return timestamp;
     }
@@ -235,9 +236,9 @@ public:
         return lastRptSeq;
     }
 
-    bool handleMessage(const std::string& );
+    bool handleMessage(const std::string&);
 
-    friend std::ostream &operator<<(std::ostream &os, const DepthBook &book)
+    friend std::ostream& operator<<(std::ostream& os, const DepthBook& book)
     {
 
         os << book.getTimestamp() << ','
@@ -249,15 +250,14 @@ public:
            << book.ask1pDelta << ','
            << book.bid1vDelta << ','
            << book.ask1vDelta << ','
-//           << book.bids.getVolumeDeltas(book.previousBids)
-//           << book.asks.getVolumeDeltas(book.previousAsks)
+           //           << book.bids.getVolumeDeltas(book.previousBids)
+           //           << book.asks.getVolumeDeltas(book.previousAsks)
            << book.trades << ','
-           << book.getLastRptSeq();
-
+           << book.getLastRptSeq() << ','
+           << book.implBids << ','
+           << book.implAsks;
         return os;
     }
-
 };
-
 
 #endif //DEPTHBOOK_H

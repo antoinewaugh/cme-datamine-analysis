@@ -57,17 +57,15 @@ constexpr char MDEntryAction_NEW = '0';
 constexpr char MDEntryAction_CHANGE = '1';
 constexpr char MDEntryAction_DELETE = '2';
 
-void string_split_optim(std::vector<std::string> &, const std::string &s, const char);
+void string_split_optim(std::vector<std::string>&, const std::string& s, const char);
 
-class OrderIdEntry
-{
+class OrderIdEntry {
 public:
     std::string OrderID;
     int LastQty;
 };
 
-struct MDEntry
-{
+struct MDEntry {
 public:
     // necessary for defaults?
     char MDUpdateAction;
@@ -87,13 +85,10 @@ public:
     double LowLimitPrice = 0.0;
     double MaxPriceVariation = 0.0;
     int ApplID = 0;
-
 };
 
-struct MDSecurityStatus
-{
+struct MDSecurityStatus {
 public:
-
     std::string TransactTime;
     std::string TradeDate;
     std::string MatchEventIndicator;
@@ -108,25 +103,21 @@ public:
     std::vector<std::string> fieldssplit;
     std::vector<std::string> kv;
 
-    void update(const std::string& );
-
+    void update(const std::string&);
 };
 
-struct MDInstrument
-{
+struct MDInstrument {
 public:
-
     std::string SecurityGroup;
     std::string Symbol;
 
     std::vector<std::string> fieldssplit;
     std::vector<std::string> kv;
 
-    void update(const std::string& );
+    void update(const std::string&);
 };
 
-class MDIncrementalRefresh
-{
+class MDIncrementalRefresh {
 
 public:
     std::string TransactTime;
@@ -139,9 +130,8 @@ public:
     std::vector<std::string> fieldssplit;
     std::vector<std::string> kv;
 
-    void update(const std::string &);
+    void update(const std::string&);
     void clear();
-
 };
 
 #endif //FIXDECODER_H

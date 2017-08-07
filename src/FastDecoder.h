@@ -1,0 +1,11 @@
+//
+// Created by antoine on 7/08/17.
+//
+
+#ifndef DEPTHBOOK_CONSTRUCTOR_FASTDECODER_H
+#define DEPTHBOOK_CONSTRUCTOR_FASTDECODER_H
+
+class FastDecoder {
+};
+
+#endif //DEPTHBOOK_CONSTRUCTOR_FASTDECODER_H

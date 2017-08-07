@@ -30,14 +30,12 @@ const std::string Field_LastQty = "32";
 const std::string Field_SettlPriceType = "731";
 const std::string Field_HaltReason = "327";
 
-
-void string_split_optim(std::vector<std::string> & output, const std::string &s, const char delimiter)
+void string_split_optim(std::vector<std::string>& output, const std::string& s, const char delimiter)
 {
     size_t start = 0;
     size_t end = s.find_first_of(delimiter);
 
-    while (end <= std::string::npos)
-    {
+    while (end <= std::string::npos) {
         output.emplace_back(s.substr(start, end - start));
 
         if (end == std::string::npos)
@@ -51,84 +49,107 @@ void string_split_optim(std::vector<std::string> & output, const std::string &s,
 void MDSecurityStatus::update(const std::string& message)
 {
 
-    string_split_optim(fieldssplit,message, FIX_FIELD_DELIMITER);
+    string_split_optim(fieldssplit, message, FIX_FIELD_DELIMITER);
 
-    for (auto fields : fieldssplit)
-    {
+    for (auto fields : fieldssplit) {
         string_split_optim(kv, fields, FIX_KEY_DELIMITER);
 
         // :: MDSecurityStatus
 
-        if (kv[KEY] == Field_TransactTime) this->TransactTime = kv[VALUE];
-        else if (kv[KEY] == Field_TradeDate) this->TradeDate = kv[VALUE];
-        else if (kv[KEY] == Field_MatchEventIndicator) this->MatchEventIndicator = kv[VALUE];
-        else if (kv[KEY] == Field_SecurityGroup) this->SecurityGroup = kv[VALUE];
-        else if (kv[KEY] == Field_Asset) this->Asset = kv[VALUE];
-        else if (kv[KEY] == Field_SecurityID) this->SecurityID = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_SecurityTradingStatus) this->SecurityTradingStatus = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_HaltReason) this->HaltReason= stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_SecurityTradingEvent) this->SecurityTradingEvent= stoi(kv[VALUE]);
+        if (kv[KEY] == Field_TransactTime)
+            this->TransactTime = kv[VALUE];
+        else if (kv[KEY] == Field_TradeDate)
+            this->TradeDate = kv[VALUE];
+        else if (kv[KEY] == Field_MatchEventIndicator)
+            this->MatchEventIndicator = kv[VALUE];
+        else if (kv[KEY] == Field_SecurityGroup)
+            this->SecurityGroup = kv[VALUE];
+        else if (kv[KEY] == Field_Asset)
+            this->Asset = kv[VALUE];
+        else if (kv[KEY] == Field_SecurityID)
+            this->SecurityID = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_SecurityTradingStatus)
+            this->SecurityTradingStatus = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_HaltReason)
+            this->HaltReason = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_SecurityTradingEvent)
+            this->SecurityTradingEvent = stoi(kv[VALUE]);
 
         kv.clear();
     }
     fieldssplit.clear();
 }
 
-
-
-void MDIncrementalRefresh::update(const std::string &message)
+void MDIncrementalRefresh::update(const std::string& message)
 {
     // Parse String
 
-    MDEntry *currentMDEntry = nullptr;
-    OrderIdEntry *currentOrderIDEntry = nullptr;
+    MDEntry* currentMDEntry = nullptr;
+    OrderIdEntry* currentOrderIDEntry = nullptr;
 
-    string_split_optim(fieldssplit,message, FIX_FIELD_DELIMITER);
+    string_split_optim(fieldssplit, message, FIX_FIELD_DELIMITER);
 
-    for (auto fields : fieldssplit)
-    {
-        string_split_optim(kv,fields, FIX_KEY_DELIMITER);
+    for (auto fields : fieldssplit) {
+        string_split_optim(kv, fields, FIX_KEY_DELIMITER);
 
         // Header :: MDIncrementalRefresh
 
-        if (kv[KEY] == Field_TransactTime) this->TransactTime = kv[VALUE];
+        if (kv[KEY] == Field_TransactTime)
+            this->TransactTime = kv[VALUE];
 
-        else if (kv[KEY] == Field_MatchEventIndicator) this->MatchEventIndicator = kv[VALUE];
-        else if (kv[KEY] == Field_NoMDEntries) this->NoMDEntries = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_NoOrderIDEntries) this->NoOrderIDEntries = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_MatchEventIndicator)
+            this->MatchEventIndicator = kv[VALUE];
+        else if (kv[KEY] == Field_NoMDEntries)
+            this->NoMDEntries = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_NoOrderIDEntries)
+            this->NoOrderIDEntries = stoi(kv[VALUE]);
 
-            // Repeating Group :: MDEntry
+        // Repeating Group :: MDEntry
 
-        else if (kv[KEY] == Field_MDUpdateAction)
-        {
+        else if (kv[KEY] == Field_MDUpdateAction) {
             MDEntries.push_back(MDEntry());
             currentMDEntry = &MDEntries.back(); // use pointer for fast lookup on subsequent repeating group fields
             currentMDEntry->MDUpdateAction = kv[VALUE][STR_TO_CHAR];
-        }
-        else if (kv[KEY] == Field_MDEntryType) currentMDEntry->MDEntryType = kv[VALUE][STR_TO_CHAR];
-        else if (kv[KEY] == Field_SecurityID) currentMDEntry->SecurityID = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_Symbol) currentMDEntry->Symbol = kv[VALUE];
-        else if (kv[KEY] == Field_RptSeq) currentMDEntry->RptSeq = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_MDEntryPx) currentMDEntry->MDEntryPx = stod(kv[VALUE]);
-        else if (kv[KEY] == Field_MDEntrySize) currentMDEntry->MDEntrySize = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_NumberOfOrders) currentMDEntry->NumberOfOrders = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_MDPriceLevel) currentMDEntry->MDPriceLevel = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_OpenCloseSettlFlag) currentMDEntry->OpenCloseSettlFlag = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_SettlPriceType) currentMDEntry->SettlPriceType = kv[VALUE];
-        else if (kv[KEY] == Field_AggressorSide) currentMDEntry->AggressorSide = stoi(kv[VALUE]);
-        else if (kv[KEY] == Field_TradingReferenceDate) currentMDEntry->TradingReferenceDate = kv[VALUE];
-        else if (kv[KEY] == Field_HighLimitPrice) currentMDEntry->HighLimitPrice = stod(kv[VALUE]);
-        else if (kv[KEY] == Field_LowLimitPrice) currentMDEntry->LowLimitPrice = stod(kv[VALUE]);
-        else if (kv[KEY] == Field_MaxPriceVariation) currentMDEntry->MaxPriceVariation = stod(kv[VALUE]);
-        else if (kv[KEY] == Field_ApplID) currentMDEntry->ApplID = stoi(kv[VALUE]);
+        } else if (kv[KEY] == Field_MDEntryType)
+            currentMDEntry->MDEntryType = kv[VALUE][STR_TO_CHAR];
+        else if (kv[KEY] == Field_SecurityID)
+            currentMDEntry->SecurityID = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_Symbol)
+            currentMDEntry->Symbol = kv[VALUE];
+        else if (kv[KEY] == Field_RptSeq)
+            currentMDEntry->RptSeq = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_MDEntryPx)
+            currentMDEntry->MDEntryPx = stod(kv[VALUE]);
+        else if (kv[KEY] == Field_MDEntrySize)
+            currentMDEntry->MDEntrySize = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_NumberOfOrders)
+            currentMDEntry->NumberOfOrders = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_MDPriceLevel)
+            currentMDEntry->MDPriceLevel = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_OpenCloseSettlFlag)
+            currentMDEntry->OpenCloseSettlFlag = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_SettlPriceType)
+            currentMDEntry->SettlPriceType = kv[VALUE];
+        else if (kv[KEY] == Field_AggressorSide)
+            currentMDEntry->AggressorSide = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_TradingReferenceDate)
+            currentMDEntry->TradingReferenceDate = kv[VALUE];
+        else if (kv[KEY] == Field_HighLimitPrice)
+            currentMDEntry->HighLimitPrice = stod(kv[VALUE]);
+        else if (kv[KEY] == Field_LowLimitPrice)
+            currentMDEntry->LowLimitPrice = stod(kv[VALUE]);
+        else if (kv[KEY] == Field_MaxPriceVariation)
+            currentMDEntry->MaxPriceVariation = stod(kv[VALUE]);
+        else if (kv[KEY] == Field_ApplID)
+            currentMDEntry->ApplID = stoi(kv[VALUE]);
 
-            // Repeating Group :: OrderIDEntry
-        else if (kv[KEY] == Field_OrderID)
-        {
+        // Repeating Group :: OrderIDEntry
+        else if (kv[KEY] == Field_OrderID) {
             OrderIdEntries.push_back(OrderIdEntry());
             currentOrderIDEntry = &OrderIdEntries.back();
             currentOrderIDEntry->OrderID = kv[VALUE];
-        } else if (kv[KEY] == Field_LastQty) currentOrderIDEntry->LastQty = stol(kv[VALUE]);
+        } else if (kv[KEY] == Field_LastQty)
+            currentOrderIDEntry->LastQty = stol(kv[VALUE]);
 
         kv.clear();
     }
@@ -141,23 +162,22 @@ void MDIncrementalRefresh::clear()
     this->OrderIdEntries.clear();
 }
 
-
-void MDInstrument::update(const std::string &message)
+void MDInstrument::update(const std::string& message)
 {
-  // Parse String
-  string_split_optim(fieldssplit,message, FIX_FIELD_DELIMITER);
+    // Parse String
+    string_split_optim(fieldssplit, message, FIX_FIELD_DELIMITER);
 
-  for (auto fields : fieldssplit)
-  {
-    string_split_optim(kv,fields, FIX_KEY_DELIMITER);
+    for (auto fields : fieldssplit) {
+        string_split_optim(kv, fields, FIX_KEY_DELIMITER);
 
-    // Header :: MDIncrementalRefresh
+        // Header :: MDIncrementalRefresh
 
-    if (kv[KEY] == Field_Symbol) this->Symbol = kv[VALUE];
-    else if (kv[KEY] == Field_ApplID) this->SecurityGroup= stoi(kv[VALUE]);
+        if (kv[KEY] == Field_Symbol)
+            this->Symbol = kv[VALUE];
+        else if (kv[KEY] == Field_ApplID)
+            this->SecurityGroup = stoi(kv[VALUE]);
 
-    kv.clear();
-  }
-  fieldssplit.clear();
+        kv.clear();
+    }
+    fieldssplit.clear();
 }
-
