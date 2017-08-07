@@ -11,7 +11,7 @@
 #include <vector>
 
 struct FileProcessor {
-    void process(const std::vector<std::string>&);
+    void process(const std::vector<std::string>&, const std::string&);
     ~FileProcessor();
 
 private:

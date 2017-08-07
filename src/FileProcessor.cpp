@@ -130,9 +130,10 @@ FileProcessor::~FileProcessor()
     }
 }
 
-void FileProcessor::process(const std::vector<std::string>& filenames)
+void FileProcessor::process(const std::vector<std::string>& filenames, const std::string& filter)
 {
 
+    std::cout << "Filter: " << filter << std::endl;
     std::string message;
 
     for (const auto& filename : filenames) {
@@ -153,7 +154,8 @@ void FileProcessor::process(const std::vector<std::string>& filenames)
 
                 for (auto& i : depthBooks_) {
                     if (i.second.handleMessage(message)) {
-                        auto& file = getOutfile(i.first);
+                        if(filename.find(filter) == std::string::npos) { break;}
+                        auto &file = getOutfile(i.first);
                         file << i.second << '\n';
                     }
                 }
