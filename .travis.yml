@@ -11,11 +11,6 @@ language: cpp
 compiler:
   - gcc
 
-install:
-
-  # Go to the Root directory  
-  - cd ..
-
 # Build steps
 script:
   - mkdir build
