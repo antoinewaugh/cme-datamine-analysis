@@ -1,18 +1,28 @@
 sudo: required
 dist: trusty
-before_install:
-  - sudo apt-get update -q
-  - sudo apt-get install -y cmake
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-6
+      - g++-6
+      - cmake
 
 # Enable C++ support
 language: cpp
 
-# Compiler selection
-compiler:
-  - gcc
-
 # Build steps
 script:
+  # Link gcc-6 and g++-6 to their standard commands
+  - ln -s /usr/bin/gcc-6 /usr/local/bin/gcc
+  - ln -s /usr/bin/g++-6 /usr/local/bin/g++
+  # Export CC and CXX to tell cmake which compiler to use
+  - export CC=/usr/bin/gcc-6
+  - export CXX=/usr/bin/g++-6
+  # Check versions of gcc, g++ and cmake
+  - gcc -v && g++ -v && cmake --version
+  # Run build 
   - mkdir build
   - cd build
   - cmake .. && make
