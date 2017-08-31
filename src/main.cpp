@@ -24,12 +24,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+
     std::string filter;
     if(strcmp(argv[1],"--filter") == 0) {
        filter = argv[2];
     }
 
-    std::vector<std::string> filenames(argc - 3);
+    std::vector<std::string> filenames;
     for (int i = 1; i < argc; ++i) {
         filenames.push_back(std::string(argv[i]));
     }

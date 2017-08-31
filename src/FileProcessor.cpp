@@ -154,7 +154,7 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
 
                 for (auto& i : depthBooks_) {
                     if (i.second.handleMessage(message)) {
-                        if(filename.find(filter) == std::string::npos) { break;}
+                        if(filename.find(filter) == std::string::npos) { continue;}
                         auto &file = getOutfile(i.first);
                         file << i.second << '\n';
                     }
