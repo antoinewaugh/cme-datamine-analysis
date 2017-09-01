@@ -174,8 +174,8 @@ void MDInstrument::update(const std::string& message)
 
         if (kv[KEY] == Field_Symbol)
             this->Symbol = kv[VALUE];
-        else if (kv[KEY] == Field_ApplID)
-            this->SecurityGroup = stoi(kv[VALUE]);
+        else if (kv[KEY] == Field_SecurityGroup)
+            this->SecurityGroup = kv[VALUE];
 
         kv.clear();
     }
