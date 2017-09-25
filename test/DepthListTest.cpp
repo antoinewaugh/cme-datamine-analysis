@@ -12,13 +12,13 @@ public:
     DepthList list;
 
     DepthListTest()
-        : list(true)
+        : list(true, 10)
     {
     }
 
     void SetUp()
     {
-        list = DepthList(true);
+        list = DepthList(true, 10);
     }
 };
 
