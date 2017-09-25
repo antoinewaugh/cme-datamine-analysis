@@ -111,6 +111,9 @@ public:
     std::string SecurityGroup;
     std::string Symbol;
 
+    int MaxDepthSupported = 0;
+    int MaxImplDepthSupported = 0;
+
     std::vector<std::string> fieldssplit;
     std::vector<std::string> kv;
 

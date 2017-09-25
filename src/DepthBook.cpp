@@ -4,16 +4,21 @@
 
 #include "DepthBook.h"
 
-DepthList::DepthList(const bool& isBuy)
+DepthList::DepthList(const bool& isBuy, int maxDepthSupported)
     : maxDepthKnown(0)
+    , maxDepthSupported(maxDepthSupported)
     , isBuy(isBuy)
     , updateCount(0)
 {
     entries.reserve(maxDepthSupported);
 }
 
-DepthList::DepthList(const DepthList& rhs)
+DepthList::DepthList(const DepthList& rhs): maxDepthKnown(rhs.maxDepthKnown)
 {
+    maxDepthKnown = rhs.maxDepthKnown;
+    maxDepthSupported = rhs.maxDepthSupported;
+    isBuy = rhs.isBuy;
+    updateCount = rhs.updateCount;
     // create *new* entries
     // default would simply increment reference count on shared_pointer
     for (auto e : rhs.getEntries()) {
@@ -23,6 +28,10 @@ DepthList::DepthList(const DepthList& rhs)
 
 DepthList& DepthList::operator=(const DepthList& rhs)
 {
+    maxDepthKnown = rhs.maxDepthKnown;
+    maxDepthSupported = rhs.maxDepthSupported;
+    isBuy = rhs.isBuy;
+    updateCount = rhs.updateCount;
     // create *new* entries
     // default would simply increment reference count on shared_pointer
     for (auto e : rhs.getEntries()) {

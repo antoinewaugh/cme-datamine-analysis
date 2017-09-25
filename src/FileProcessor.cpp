@@ -149,7 +149,7 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
                     // create instrument books & outfiles
                     MDInstrument instrument;
                     instrument.update(message);
-                    depthBooks_.emplace(instrument.Symbol, DepthBook(instrument.Symbol, instrument.SecurityGroup));
+                    depthBooks_.emplace(instrument.Symbol, DepthBook(instrument.Symbol, instrument.SecurityGroup, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported));
                 }
 
                 for (auto& i : depthBooks_) {

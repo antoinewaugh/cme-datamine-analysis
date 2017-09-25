@@ -95,7 +95,7 @@ TEST_F(DepthListTest, copyConstructor)
 
 TEST_F(DepthListTest, assignmentOperator)
 {
-    DepthList copy(true);
+    DepthList copy(true, 10);
     copy = list;
 
     copy.insert(1300.25, 100, 1, MDEntryAction_NEW);

@@ -6,6 +6,7 @@ const std::string Field_TransactTime = "60";
 const std::string Field_TradeDate = "75";
 const std::string Field_MatchEventIndicator = "5799";
 const std::string Field_NoMDEntries = "268";
+const std::string Field_NoMdFeedTypes= "1141";
 const std::string Field_MDUpdateAction = "279";
 const std::string Field_MDEntryType = "269";
 const std::string Field_SecurityID = "48";
@@ -29,6 +30,7 @@ const std::string Field_OrderID = "37";
 const std::string Field_LastQty = "32";
 const std::string Field_SettlPriceType = "731";
 const std::string Field_HaltReason = "327";
+const std::string Field_MarketDepth = "264";
 
 void string_split_optim(std::vector<std::string>& output, const std::string& s, const char delimiter)
 {
@@ -170,12 +172,18 @@ void MDInstrument::update(const std::string& message)
     for (auto fields : fieldssplit) {
         string_split_optim(kv, fields, FIX_KEY_DELIMITER);
 
-        // Header :: MDIncrementalRefresh
-
         if (kv[KEY] == Field_Symbol)
             this->Symbol = kv[VALUE];
         else if (kv[KEY] == Field_SecurityGroup)
             this->SecurityGroup = kv[VALUE];
+        else if(kv[KEY] == Field_MarketDepth) {
+            // default to assigning MaxDepth , otherwise Impl.
+            if (MaxDepthSupported == 0) {
+               this->MaxDepthSupported = stoi(kv[VALUE]);
+            } else {
+               this->MaxImplDepthSupported= stoi(kv[VALUE]);
+            }
+        }
 
         kv.clear();
     }

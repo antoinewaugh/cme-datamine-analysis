@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <iostream>
 #include <vector>
 
 struct PriceEntry {
@@ -28,8 +29,8 @@ private:
     std::vector<std::shared_ptr<PriceEntry> > entries;
     std::map<double, std::shared_ptr<PriceEntry> > byPrice;
 
-    int maxDepthSupported = 10; // mve to constructor
-    int maxDepthKnown = 0;
+    int maxDepthSupported;
+    int maxDepthKnown;
 
     bool isBuy;
 
@@ -38,7 +39,7 @@ private:
     void remove(int, double);
 
 public:
-    DepthList(const bool&); // simple constructor
+    DepthList(const bool&, int maxDepthSupported); // simple constructor
     DepthList(const DepthList&); // copy constructor
     DepthList& operator=(const DepthList& rhs); // assignment operator
 
@@ -84,7 +85,9 @@ public:
         }
 
         // Fill blank columns if book size < max depth
-        for (int i = list.getMaxDepthSupported() - count - 1; i >= 0; --i) {
+        int MAX = 10; // keep constant 10 to match output columns in csv
+        for (int i = MAX - count - 1; i >= 0; --i) {
+            //for (int i = list.getMaxDepthSupported() - count - 1; i >= 0; --i) {
             os << ",,";
         }
 
@@ -195,32 +198,23 @@ private:
     MDSecurityStatus mdStatus;
 
 public:
-    DepthBook(const std::string& symbol, const std::string& securityGroup)
+    DepthBook(const std::string& symbol, const std::string& securityGroup,
+              int maxDepthSupported, int maxImplDepthSupported)
         : symbol(symbol)
         , securityGroup(securityGroup)
-        , bids(true)
-        , asks(false)
-        , implBids(true)
-        , implAsks(false)
+        , bids(true, maxDepthSupported)
+        , asks(false, maxDepthSupported)
+        , implBids(true, maxImplDepthSupported)
+        , implAsks(false, maxImplDepthSupported)
         , bid1pDelta(0)
         , ask1pDelta(0)
         , bid1vDelta(0)
         , ask1vDelta(0)
     {
     }
-    DepthBook()
-        : symbol("")
-        , securityGroup("")
-        , bids(true)
-        , asks(false)
-        , implBids(true)
-        , implAsks(false)
-        , bid1pDelta(0)
-        , ask1pDelta(0)
-        , bid1vDelta(0)
-        , ask1vDelta(0)
-    {
-    }
+
+    DepthBook() = default;
+
     const std::string& getTimestamp() const
     {
         return timestamp;

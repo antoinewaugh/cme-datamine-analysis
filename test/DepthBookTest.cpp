@@ -10,7 +10,7 @@ class DepthBookTest : public testing::Test {
 public:
     DepthBook depthbook;
     DepthBookTest()
-        : depthbook("ESM7", "ES")
+        : depthbook("ESM7", "ES", 10, 0)
     {
     }
 };
