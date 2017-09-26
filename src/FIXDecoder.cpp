@@ -6,7 +6,6 @@ const std::string Field_TransactTime = "60";
 const std::string Field_TradeDate = "75";
 const std::string Field_MatchEventIndicator = "5799";
 const std::string Field_NoMDEntries = "268";
-const std::string Field_NoMdFeedTypes= "1141";
 const std::string Field_MDUpdateAction = "279";
 const std::string Field_MDEntryType = "269";
 const std::string Field_SecurityID = "48";

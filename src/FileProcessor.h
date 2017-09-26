@@ -18,7 +18,7 @@ private:
     std::map<std::string, DepthBook> depthBooks_;
     std::map<std::string, std::ofstream> outfiles_;
 
-    std::ofstream& getOutfile(const std::string&);
+    void createOutfile(const std::string&, int, int);
 };
 
 #endif //DEPTHBOOK_CONSTRUCTOR_FILEPROCESSOR_H

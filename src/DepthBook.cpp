@@ -191,9 +191,8 @@ bool DepthBook::handleMessage(const std::string& s)
         if (mdStatus.SecurityGroup == this->securityGroup) {
 
             this->timestamp = mdStatus.TransactTime;
-            this->securityTradingStatus = mdStatus.SecurityTradingStatus;
             this->matchEventIndicator = mdStatus.MatchEventIndicator;
-
+            setSecurityStatus(mdStatus.SecurityTradingStatus);
             bookUpdated = true;
         }
 
@@ -274,4 +273,10 @@ bool DepthBook::handleMessage(const std::string& s)
 const std::string& DepthBook::getMatchEventIndicator() const
 {
     return matchEventIndicator;
+}
+
+void DepthBook::setSecurityStatus(int status) {
+    if (status != 103) {
+        securityTradingStatus = status;
+    }
 }

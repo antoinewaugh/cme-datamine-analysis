@@ -9,55 +9,28 @@
 #include <string>
 #include <vector>
 
-void writeHeaders(std::ostream& o)
+void writeHeaders(std::ostream& o, int maxDepth, int maxImpDepth)
 {
     o
         << "timestamp, "
         << "securityStatus, "
-        << "matchEventIndicator, "
-        << "bid1p, "
-        << "bid1v, "
-        << "bid2p, "
-        << "bid2v, "
-        << "bid3p, "
-        << "bid3v, "
-        << "bid4p, "
-        << "bid4v, "
-        << "bid5p, "
-        << "bid5v, "
-        << "bid6p, "
-        << "bid6v, "
-        << "bid7p, "
-        << "bid7v, "
-        << "bid8p, "
-        << "bid8v, "
-        << "bid9p, "
-        << "bid9v, "
-        << "bid10p, "
-        << "bid10v, "
-        << "bidUpdateCount, "
-        << "ask1p, "
-        << "ask1v, "
-        << "ask2p, "
-        << "ask2v, "
-        << "ask3p, "
-        << "ask3v, "
-        << "ask4p, "
-        << "ask4v, "
-        << "ask5p, "
-        << "ask5v, "
-        << "ask6p, "
-        << "ask6v, "
-        << "ask7p, "
-        << "ask7v, "
-        << "ask8p, "
-        << "ask8v, "
-        << "ask9p, "
-        << "ask9v, "
-        << "ask10p, "
-        << "ask10v, "
-        << "askUpdateCount, "
-        << "bid1pDelta, "
+        << "matchEventIndicator, ";
+
+    for(int i = 1; i<=maxDepth; ++i) {
+        o << "bid" << i << "p, "
+          << "bid" << i << "v, ";
+    }
+
+    o << "bidUpdateCount, ";
+
+    for(int i = 1; i<=maxDepth; ++i) {
+        o << "ask" << i << "p, "
+          << "ask" << i << "v, ";
+    }
+
+    o << "askUpdateCount, ";
+
+    o   << "bid1pDelta, "
         << "ask1pDelta, "
         << "bid1vDelta, "
         << "ask1vDelta, "
@@ -67,59 +40,35 @@ void writeHeaders(std::ostream& o)
         << "tradeMin, "
         << "tradeMax, "
         << "tradeDetails, "
-        << "lastRptSeq, "
-        << "ibid1p, "
-        << "ibid1v, "
-        << "ibid2p, "
-        << "ibid2v, "
-        << "ibid3p, "
-        << "ibid3v, "
-        << "ibid4p, "
-        << "ibid4v, "
-        << "ibid5p, "
-        << "ibid5v, "
-        << "ibid6p, "
-        << "ibid6v, "
-        << "ibid7p, "
-        << "ibid7v, "
-        << "ibid8p, "
-        << "ibid8v, "
-        << "ibid9p, "
-        << "ibid9v, "
-        << "ibid10p, "
-        << "iask1p, "
-        << "iask1v, "
-        << "iask2p, "
-        << "iask2v, "
-        << "iask3p, "
-        << "iask3v, "
-        << "iask4p, "
-        << "iask4v, "
-        << "iask5p, "
-        << "iask5v, "
-        << "iask6p, "
-        << "iask6v, "
-        << "iask7p, "
-        << "iask7v, "
-        << "iask8p, "
-        << "iask8v, "
-        << "iask9p, "
-        << "iask9v, "
-        << "iask10p, "
-        << "iask10v "
-        << '\n';
+        << "lastRptSeq, ";
+
+    for(int i = 1; i<=maxImpDepth ; ++i) {
+        o << "ibid" << i << "p, "
+          << "ibid" << i << "v, ";
+    }
+
+    o << "ibidUpdateCount, ";
+
+    for(int i = 1; i<=maxImpDepth ; ++i) {
+        o << "iask" << i << "p, "
+          << "iask" << i << "v, ";
+    }
+
+    o << "iaskUpdateCount, ";
+
+    o << '\n';
 }
 
-std::ofstream& FileProcessor::getOutfile(const std::string& symbol)
+void FileProcessor::createOutfile(const std::string& symbol, int maxDepth, int maxImplDepth)
 {
     if (!outfiles_.count(symbol)) {
         outfiles_.emplace(symbol, std::ofstream(symbol + ".csv"));
         auto& out = outfiles_[symbol];
         if (out.is_open()) {
-            writeHeaders(out);
+            writeHeaders(out, maxDepth, maxImplDepth);
         }
     }
-    return outfiles_[symbol];
+
 }
 
 // maybe this is automatically handled by map's destructor?
@@ -149,13 +98,14 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
                     // create instrument books & outfiles
                     MDInstrument instrument;
                     instrument.update(message);
+                    createOutfile(instrument.Symbol, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported);
                     depthBooks_.emplace(instrument.Symbol, DepthBook(instrument.Symbol, instrument.SecurityGroup, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported));
                 }
 
                 for (auto& i : depthBooks_) {
                     if (i.second.handleMessage(message)) {
                         if(filename.find(filter) == std::string::npos) { continue;}
-                        auto &file = getOutfile(i.first);
+                        auto &file = outfiles_[i.first];
                         file << i.second << '\n';
                     }
                 }

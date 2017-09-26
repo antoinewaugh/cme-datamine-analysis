@@ -75,23 +75,18 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const DepthList& list)
     {
-        // Output in CSV
-        // Column count needs to be constant to avoid misaligns
-
-        int count = 0;
-        for (auto&& entry : list.getEntries()) {
-            os << *entry << ',';
-            ++count;
-        }
-
-        // Fill blank columns if book size < max depth
-        int MAX = 10; // keep constant 10 to match output columns in csv
-        for (int i = MAX - count - 1; i >= 0; --i) {
-            //for (int i = list.getMaxDepthSupported() - count - 1; i >= 0; --i) {
-            os << ",,";
+        auto &&entries = list.getEntries();
+        for (int i = 0; i < list.getMaxDepthSupported(); ++i) {
+            if (i < entries.size()) {
+                os << *entries[i] << ",";
+            }
+            else {
+                os << ",,";
+            }
         }
 
         os << list.getUpdateCount();
+
         return os;
     }
 };
@@ -169,10 +164,6 @@ private:
     std::string securityGroup;
     std::string matchEventIndicator;
 
-public:
-    const std::string& getMatchEventIndicator() const;
-
-private:
     DepthList bids;
     DepthList asks;
 
@@ -189,13 +180,16 @@ private:
 
     long lastRptSeq;
 
-    int securityTradingStatus;
+    int securityTradingStatus = 0;
 
     void clearFlags();
     void resetState();
 
+    void setSecurityStatus(int);
     MDIncrementalRefresh mdRefresh;
     MDSecurityStatus mdStatus;
+
+
 
 public:
     DepthBook(const std::string& symbol, const std::string& securityGroup,
@@ -231,6 +225,8 @@ public:
     }
 
     bool handleMessage(const std::string&);
+
+    const std::string& getMatchEventIndicator() const;
 
     friend std::ostream& operator<<(std::ostream& os, const DepthBook& book)
     {
