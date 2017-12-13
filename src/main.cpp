@@ -3,7 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "string.h"
+#include <iomanip>
+#include <string>
 
 void usage()
 {
@@ -18,7 +19,7 @@ void usage()
 int main(int argc, char* argv[])
 {
     std::ios_base::sync_with_stdio(false);
-
+    std::setprecision(15);
     if (argc < 2) {
         usage();
         return 1;
