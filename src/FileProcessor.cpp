@@ -5,13 +5,14 @@
 #include "FileProcessor.h"
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
 
 void writeHeaders(std::ostream& o, int maxDepth, int maxImpDepth)
 {
-    o
+    o   << std::setprecision(12)
         << "timestamp, "
         << "securityStatus, "
         << "matchEventIndicator, ";
@@ -89,9 +90,9 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
 
         std::ifstream file(filename);
         if (file.is_open()) {
-
+		
             std::cout << "Opening : " << filename << std::endl;
-
+	
             while (std::getline(file, message)) {
 
                 if (message.find("35=d") != std::string::npos) {
