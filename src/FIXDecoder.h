@@ -18,6 +18,7 @@ constexpr int VALUE = 1;
 extern const std::string Field_Asset;
 extern const std::string Field_Symbol;
 extern const std::string Field_TransactTime;
+extern const std::string Field_SendingTime;
 extern const std::string Field_TradeDate;
 extern const std::string Field_MatchEventIndicator;
 extern const std::string Field_NoMDEntries;
@@ -90,6 +91,7 @@ public:
 struct MDSecurityStatus {
 public:
     std::string TransactTime;
+    std::string SendingTime;
     std::string TradeDate;
     std::string MatchEventIndicator;
     std::string SecurityGroup;
@@ -124,6 +126,7 @@ class MDIncrementalRefresh {
 
 public:
     std::string TransactTime;
+    std::string SendingTime;
     std::string MatchEventIndicator;
     int NoMDEntries;
     int NoOrderIDEntries = 0;

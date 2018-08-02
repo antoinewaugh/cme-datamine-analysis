@@ -191,6 +191,7 @@ bool DepthBook::handleMessage(const std::string& s)
         if (mdStatus.SecurityGroup == this->securityGroup) {
 
             this->timestamp = mdStatus.TransactTime;
+            this->sendingtime = mdStatus.SendingTime;
             this->matchEventIndicator = mdStatus.MatchEventIndicator;
             setSecurityStatus(mdStatus.SecurityTradingStatus);
             bookUpdated = true;
@@ -212,6 +213,7 @@ bool DepthBook::handleMessage(const std::string& s)
         for (auto entry : mdRefresh.MDEntries) {
             if (entry.Symbol == this->symbol) {
                 this->timestamp = mdRefresh.TransactTime;
+                this->sendingtime = mdRefresh.SendingTime;
                 this->matchEventIndicator = mdRefresh.MatchEventIndicator;
 
                 // remove book state when market transitions over weekend

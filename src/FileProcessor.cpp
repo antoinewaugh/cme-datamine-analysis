@@ -14,6 +14,7 @@ void writeHeaders(std::ostream& o, int maxDepth, int maxImpDepth)
 {
     o   << std::setprecision(12)
         << "timestamp, "
+        << "sendingtime, "
         << "securityStatus, "
         << "matchEventIndicator, ";
 
@@ -55,7 +56,7 @@ void writeHeaders(std::ostream& o, int maxDepth, int maxImpDepth)
           << "iask" << i << "v, ";
     }
 
-    o << "iaskUpdateCount, ";
+    o << "iaskUpdateCount";
 
     o << '\n';
 }

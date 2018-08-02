@@ -159,6 +159,7 @@ class DepthBook {
 
 private:
     std::string timestamp;
+    std::string sendingtime;
 
     std::string symbol;
     std::string securityGroup;
@@ -214,6 +215,11 @@ public:
         return timestamp;
     }
 
+    const std::string& getSendingTime() const
+    {
+        return sendingtime;
+    }
+
     int getSecurityTradingStatus() const
     {
         return securityTradingStatus;
@@ -232,6 +238,7 @@ public:
     {
 
         os << book.getTimestamp() << ','
+           << book.getSendingTime() << ','
            << book.getSecurityTradingStatus() << ','
            << book.getMatchEventIndicator() << ','
            << book.bids << ','

@@ -3,6 +3,7 @@
 const std::string Field_Asset = "6937";
 const std::string Field_Symbol = "55";
 const std::string Field_TransactTime = "60";
+const std::string Field_SendingTime = "52";
 const std::string Field_TradeDate = "75";
 const std::string Field_MatchEventIndicator = "5799";
 const std::string Field_NoMDEntries = "268";
@@ -59,6 +60,8 @@ void MDSecurityStatus::update(const std::string& message)
 
         if (kv[KEY] == Field_TransactTime)
             this->TransactTime = kv[VALUE];
+        else if (kv[KEY] == Field_SendingTime)
+            this->SendingTime = kv[VALUE];
         else if (kv[KEY] == Field_TradeDate)
             this->TradeDate = kv[VALUE];
         else if (kv[KEY] == Field_MatchEventIndicator)
@@ -97,7 +100,8 @@ void MDIncrementalRefresh::update(const std::string& message)
 
         if (kv[KEY] == Field_TransactTime)
             this->TransactTime = kv[VALUE];
-
+        else if (kv[KEY] == Field_SendingTime)
+            this->SendingTime = kv[VALUE];
         else if (kv[KEY] == Field_MatchEventIndicator)
             this->MatchEventIndicator = kv[VALUE];
         else if (kv[KEY] == Field_NoMDEntries)
