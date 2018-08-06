@@ -140,4 +140,44 @@ public:
     void clear();
 };
 
+enum class MsgType {
+    Instrument,
+    IncrementalRefresh,
+    SecurityStatus
+};
+
+
+class Decoder {
+public:
+    MsgType getType(std::string const& message)  {
+       if(message.find("35=X") != std::string::npos)
+           return MsgType::IncrementalRefresh;
+       if(message.find("35=d") != std::string::npos)
+           return MsgType::Instrument;
+       if(message.find("35=f") != std::string::npos)
+           return MsgType::SecurityStatus;
+    }
+
+    MDIncrementalRefresh & getIncrementalRefresh(std::string const& message) {
+        mdRefresh.update(message);
+        return mdRefresh;
+    }
+
+    MDInstrument const& getInstrument(std::string const& message) {
+        mdInstrument.update(message);
+        return mdInstrument;
+    }
+
+    MDSecurityStatus const& getSecurityStatus(std::string const& message) {
+        mdStatus.update(message);
+        return mdStatus;
+    }
+
+private:
+    MDInstrument mdInstrument;
+    MDIncrementalRefresh mdRefresh;
+    MDSecurityStatus mdStatus;
+};
+
 #endif //FIXDECODER_H
+

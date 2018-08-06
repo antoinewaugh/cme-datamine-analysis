@@ -23,7 +23,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-
     std::string filter;
     if(strcmp(argv[1],"--filter") == 0) {
        filter = argv[2];

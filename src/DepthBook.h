@@ -39,6 +39,7 @@ private:
     void remove(int, double);
 
 public:
+    DepthList() = default;
     DepthList(const bool&, int maxDepthSupported); // simple constructor
     DepthList(const DepthList&); // copy constructor
     DepthList& operator=(const DepthList& rhs); // assignment operator
@@ -187,10 +188,13 @@ private:
     void resetState();
 
     void setSecurityStatus(int);
-    MDIncrementalRefresh mdRefresh;
-    MDSecurityStatus mdStatus;
 
+    double prevBid1p = 0;
+    double prevBid1v = 0;
+    double prevAsk1p = 0;
+    double prevAsk1v = 0;
 
+    bool updated = false;
 
 public:
     DepthBook(const std::string& symbol, const std::string& securityGroup,
@@ -230,7 +234,20 @@ public:
         return lastRptSeq;
     }
 
-    bool handleMessage(const std::string&);
+    std::string const& getSymbol() const
+    {
+        return symbol;
+    }
+
+    bool bookUpdated() {
+        return updated;
+    }
+
+    void onStatus(MDSecurityStatus const& status);
+    void onEntry(MDIncrementalRefresh const& mdRefresh, MDEntry const& entry);
+
+    void startTopOfBookTracking();
+    void stopTopOfBookTracking();
 
     const std::string& getMatchEventIndicator() const;
 

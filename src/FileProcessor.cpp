@@ -5,6 +5,7 @@
 #include "FileProcessor.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <map>
 #include <string>
@@ -87,6 +88,8 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
     std::cout << "Filter: " << filter << std::endl;
     std::string message;
 
+    Decoder decoder;
+
     for (const auto& filename : filenames) {
 
         std::ifstream file(filename);
@@ -96,21 +99,59 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
 	
             while (std::getline(file, message)) {
 
-                if (message.find("35=d") != std::string::npos) {
-                    // create instrument books & outfiles
-                    MDInstrument instrument;
-                    instrument.update(message);
-                    createOutfile(instrument.Symbol, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported);
-                    depthBooks_.emplace(instrument.Symbol, DepthBook(instrument.Symbol, instrument.SecurityGroup, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported));
+                auto msgType = decoder.getType(message);
+
+                if(msgType == MsgType::Instrument) {
+
+                    auto& instrument = decoder.getInstrument(message);
+
+                    createOutfile(instrument.Symbol,
+                                  instrument.MaxDepthSupported,
+                                  instrument.MaxImplDepthSupported);
+
+                    depthBooks_.emplace(instrument.Symbol,
+                                        DepthBook(instrument.Symbol,
+                                                  instrument.SecurityGroup,
+                                                  instrument.MaxDepthSupported,
+                                                  instrument.MaxImplDepthSupported));
+
                 }
 
-                for (auto& i : depthBooks_) {
-                    if (i.second.handleMessage(message)) {
-                        if(filename.find(filter) == std::string::npos) { continue;}
-                        auto &file = outfiles_[i.first];
-                        file << i.second << '\n';
+                else if(msgType == MsgType::SecurityStatus) {
+
+                    auto& status = decoder.getSecurityStatus(message);
+
+                    for(auto& book: depthBooks_)
+                        book.second.onStatus(status);
+                }
+
+                else if(msgType == MsgType::IncrementalRefresh) {
+
+                    auto &refresh = decoder.getIncrementalRefresh(message);
+
+                    for (auto &book: depthBooks_)
+                       book.second.startTopOfBookTracking();
+
+                    for (auto &entry : refresh.MDEntries) {
+                            auto &book = depthBooks_[entry.Symbol];
+                            book.onEntry(refresh, entry);
+                    }
+
+                    for (auto &book: depthBooks_)
+                        book.second.stopTopOfBookTracking();
+
+                    refresh.clear();
+                }
+
+                for (auto &book: depthBooks_) {
+                    if (book.second.bookUpdated()) {
+                        if (filename.find(filter) == std::string::npos)
+                            continue;
+                        auto &file = outfiles_[book.first];
+                        file << book.second << '\n';
                     }
                 }
+
             }
         }
     }

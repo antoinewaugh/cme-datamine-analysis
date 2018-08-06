@@ -160,116 +160,101 @@ void DepthBook::clearFlags()
     asks.clear();
     implBids.clear();
     implAsks.clear();
+    updated = false;
 }
 
 void DepthBook::resetState()
 {
-
     trades.clear();
     bids.reset();
     asks.reset();
     implBids.reset();
     implAsks.reset();
+    updated = false;
 }
 
-bool isStatusUpdate(const std::string& s)
-{
-    return s.find("35=f") != std::string::npos;
-}
-
-bool DepthBook::handleMessage(const std::string& s)
-{
-    // Update book
-    bool bookUpdated = false;
+void DepthBook::onStatus(MDSecurityStatus const& mdStatus) {
 
     clearFlags();
 
-    // FIXME: Move to decoder
-    if (isStatusUpdate(s)) {
-
-        mdStatus.update(s);
-        if (mdStatus.SecurityGroup == this->securityGroup) {
-
-            this->timestamp = mdStatus.TransactTime;
-            this->sendingtime = mdStatus.SendingTime;
-            this->matchEventIndicator = mdStatus.MatchEventIndicator;
-            setSecurityStatus(mdStatus.SecurityTradingStatus);
-            bookUpdated = true;
-        }
-
-    } else if (s.find("35=X") != std::string::npos) {
-        mdRefresh.update(s);
-
-        double prevBid1p = bids.getBestEntry().price;
-        double prevBid1v = bids.getBestEntry().quantity;
-        double prevAsk1p = asks.getBestEntry().price;
-        double prevAsk1v = asks.getBestEntry().quantity;
-
-        // replace with deep copy of book,
-        // then bids.getDeltas(previousBids)
-        // where price at top level can represent bid1pdelta
-        // and each of the volumes equal the volume deltas
-
-        for (auto entry : mdRefresh.MDEntries) {
-            if (entry.Symbol == this->symbol) {
-                this->timestamp = mdRefresh.TransactTime;
-                this->sendingtime = mdRefresh.SendingTime;
-                this->matchEventIndicator = mdRefresh.MatchEventIndicator;
-
-                // remove book state when market transitions over weekend
-                if (this->lastRptSeq > entry.RptSeq) {
-                    resetState();
-                }
-
-                switch (entry.MDEntryType) {
-
-                case MDEntryType_BID:
-                    bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
-                    this->lastRptSeq = entry.RptSeq;
-                    bookUpdated = true;
-                    break;
-
-                case MDEntryType_OFFER:
-                    asks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
-                    this->lastRptSeq = entry.RptSeq;
-                    bookUpdated = true;
-                    break;
-
-                case MDEntryType_IMPLIED_BID:
-                    implBids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
-                    this->lastRptSeq = entry.RptSeq;
-                    bookUpdated = true;
-                    break;
-
-                case MDEntryType_IMPLIED_OFFER:
-                    implAsks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
-                    this->lastRptSeq = entry.RptSeq;
-                    bookUpdated = true;
-                    break;
-
-                case MDEntryType_TRADE:
-                    trades.insert(entry.MDEntryPx, entry.MDEntrySize, entry.AggressorSide);
-                    this->lastRptSeq = entry.RptSeq;
-                    bookUpdated = true;
-                    break;
-                }
-            }
-        }
-
-        // update top of book deltas
-        // this needs to be done external to the depthbook as the book us unaware of
-        // how many mdEntries are in a single MDIncrementalRefresh
-
-        if (prevBid1p > 0.0 and prevAsk1p > 0.0) {
-            this->bid1pDelta = bids.getBestEntry().price - prevBid1p;
-            this->bid1vDelta = bids.getBestEntry().quantity - prevBid1v;
-            this->ask1pDelta = asks.getBestEntry().price - prevAsk1p;
-            this->ask1vDelta = asks.getBestEntry().quantity - prevAsk1v;
-        }
-
-        mdRefresh.clear();
+    if (mdStatus.SecurityGroup == this->securityGroup) {
+        this->timestamp = mdStatus.TransactTime;
+        this->sendingtime = mdStatus.SendingTime;
+        this->matchEventIndicator = mdStatus.MatchEventIndicator;
+        setSecurityStatus(mdStatus.SecurityTradingStatus);
+        updated = true;
     }
-    return bookUpdated;
+}
+
+void DepthBook::startTopOfBookTracking() {
+    prevBid1p = bids.getBestEntry().price;
+    prevBid1v = bids.getBestEntry().quantity;
+    prevAsk1p = asks.getBestEntry().price;
+    prevAsk1v = asks.getBestEntry().quantity;
+}
+
+void DepthBook::stopTopOfBookTracking() {
+
+    if (prevBid1p > 0.0 and prevAsk1p > 0.0) {
+        this->bid1pDelta = bids.getBestEntry().price - prevBid1p;
+        this->bid1vDelta = bids.getBestEntry().quantity - prevBid1v;
+        this->ask1pDelta = asks.getBestEntry().price - prevAsk1p;
+        this->ask1vDelta = asks.getBestEntry().quantity - prevAsk1v;
+    }
+}
+
+void DepthBook::onEntry(MDIncrementalRefresh const& mdRefresh, MDEntry const& entry)
+{
+    clearFlags();
+
+    if (entry.Symbol == this->symbol) {
+        this->timestamp = mdRefresh.TransactTime;
+        this->sendingtime = mdRefresh.SendingTime;
+        this->matchEventIndicator = mdRefresh.MatchEventIndicator;
+
+        // remove book state when market transitions over weekend
+        if (this->lastRptSeq > entry.RptSeq) {
+            resetState();
+        }
+
+        switch (entry.MDEntryType) {
+
+            case MDEntryType_BID:
+                bids.insert(entry.MDEntryPx, entry.MDEntrySize,
+                            entry.MDPriceLevel, entry.MDUpdateAction);
+                this->lastRptSeq = entry.RptSeq;
+                updated = true;
+                break;
+
+            case MDEntryType_OFFER:
+                asks.insert(entry.MDEntryPx, entry.MDEntrySize,
+                            entry.MDPriceLevel, entry.MDUpdateAction);
+                this->lastRptSeq = entry.RptSeq;
+                updated = true;
+                break;
+
+            case MDEntryType_IMPLIED_BID:
+                implBids.insert(entry.MDEntryPx, entry.MDEntrySize,
+                                entry.MDPriceLevel, entry.MDUpdateAction);
+                this->lastRptSeq = entry.RptSeq;
+                updated = true;
+                break;
+
+            case MDEntryType_IMPLIED_OFFER:
+                implAsks.insert(entry.MDEntryPx, entry.MDEntrySize,
+                                entry.MDPriceLevel, entry.MDUpdateAction);
+                this->lastRptSeq = entry.RptSeq;
+                updated = true;
+                break;
+
+            case MDEntryType_TRADE:
+                trades.insert(entry.MDEntryPx, entry.MDEntrySize,
+                              entry.AggressorSide);
+                this->lastRptSeq = entry.RptSeq;
+                updated = true;
+                break;
+        }
+    }
 }
 
 const std::string& DepthBook::getMatchEventIndicator() const
