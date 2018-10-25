@@ -42,7 +42,7 @@ public:
     DepthList(const bool&, int maxDepthSupported); // simple constructor
     DepthList(const DepthList&); // copy constructor
     DepthList& operator=(const DepthList& rhs); // assignment operator
-
+    DepthList() = default;
     void insert(double, int, int, char);
     PriceEntry getBestEntry();
 
@@ -101,6 +101,7 @@ private:
     std::vector<PriceEntry> trades;
 
 public:
+    TradeList() = default;
     const std::vector<PriceEntry>& getTrades() const
     {
         return trades;
@@ -183,7 +184,6 @@ private:
 
     int securityTradingStatus = 0;
 
-    void clearFlags();
     void resetState();
 
     void setSecurityStatus(int);
@@ -193,7 +193,7 @@ private:
 
 
 public:
-    DepthBook(const std::string& symbol, const std::string& securityGroup,
+    DepthBook(std::string_view symbol, std::string_view securityGroup,
               int maxDepthSupported, int maxImplDepthSupported)
         : symbol(symbol)
         , securityGroup(securityGroup)
@@ -209,6 +209,12 @@ public:
     }
 
     DepthBook() = default;
+
+    void clearFlags();
+    bool handleEntry(std::string_view transactTime,
+                                std::string_view sendingTime,
+                                std::string_view matchEventIndicator,
+                                MDEntry const& entry);
 
     const std::string& getTimestamp() const
     {
@@ -230,13 +236,12 @@ public:
         return lastRptSeq;
     }
 
-    bool handleMessage(const std::string&);
+    bool handleMessage(std::string_view);
 
     const std::string& getMatchEventIndicator() const;
 
     friend std::ostream& operator<<(std::ostream& os, const DepthBook& book)
     {
-
         os << book.getTimestamp() << ','
            << book.getSendingTime() << ','
            << book.getSecurityTradingStatus() << ','

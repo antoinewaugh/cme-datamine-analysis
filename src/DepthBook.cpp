@@ -172,12 +172,57 @@ void DepthBook::resetState()
     implAsks.reset();
 }
 
-bool isStatusUpdate(const std::string& s)
-{
-    return s.find("35=f") != std::string::npos;
+bool DepthBook::handleEntry(std::string_view transactTime,
+        std::string_view sendingTime,
+        std::string_view matchEventIndicator,
+        MDEntry const& entry) {
+
+    clearFlags();
+
+    double prevBid1p = bids.getBestEntry().price;
+    double prevBid1v = bids.getBestEntry().quantity;
+    double prevAsk1p = asks.getBestEntry().price;
+    double prevAsk1v = asks.getBestEntry().quantity;
+
+    this->timestamp = transactTime;
+    this->sendingtime = sendingTime;
+    this->matchEventIndicator = matchEventIndicator;
+
+    // remove book state when market transitions over weekend
+    if (this->lastRptSeq > entry.RptSeq) {
+        resetState();
+    }
+
+    switch (entry.MDEntryType) {
+
+        case MDEntryType_BID:
+            bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+            this->lastRptSeq = entry.RptSeq;
+            break;
+
+        case MDEntryType_OFFER:
+            asks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+            this->lastRptSeq = entry.RptSeq;
+            break;
+
+        case MDEntryType_IMPLIED_BID:
+            implBids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+            this->lastRptSeq = entry.RptSeq;
+            break;
+
+        case MDEntryType_IMPLIED_OFFER:
+            implAsks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
+            this->lastRptSeq = entry.RptSeq;
+            break;
+
+        case MDEntryType_TRADE:
+            trades.insert(entry.MDEntryPx, entry.MDEntrySize, entry.AggressorSide);
+            this->lastRptSeq = entry.RptSeq;
+            break;
+    }
 }
 
-bool DepthBook::handleMessage(const std::string& s)
+bool DepthBook::handleMessage(std::string_view s)
 {
     // Update book
     bool bookUpdated = false;

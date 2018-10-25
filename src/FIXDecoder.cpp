@@ -1,38 +1,8 @@
 #include "FIXDecoder.h"
+#include <string_view>
 
-const std::string Field_Asset = "6937";
-const std::string Field_Symbol = "55";
-const std::string Field_TransactTime = "60";
-const std::string Field_SendingTime = "52";
-const std::string Field_TradeDate = "75";
-const std::string Field_MatchEventIndicator = "5799";
-const std::string Field_NoMDEntries = "268";
-const std::string Field_MDUpdateAction = "279";
-const std::string Field_MDEntryType = "269";
-const std::string Field_SecurityID = "48";
-const std::string Field_SecurityGroup = "1151";
-const std::string Field_SecurityTradingEvent = "1174";
-const std::string Field_SecurityTradingStatus = "326";
-const std::string Field_RptSeq = "83";
-const std::string Field_MDEntryPx = "270";
-const std::string Field_MDEntrySize = "271";
-const std::string Field_NumberOfOrders = "346";
-const std::string Field_MDPriceLevel = "1023";
-const std::string Field_OpenCloseSettlFlag = "286";
-const std::string Field_AggressorSide = "5797";
-const std::string Field_TradingReferenceDate = "5796";
-const std::string Field_HighLimitPrice = "1149";
-const std::string Field_LowLimitPrice = "1148";
-const std::string Field_MaxPriceVariation = "1143";
-const std::string Field_ApplID = "1180";
-const std::string Field_NoOrderIDEntries = "37705";
-const std::string Field_OrderID = "37";
-const std::string Field_LastQty = "32";
-const std::string Field_SettlPriceType = "731";
-const std::string Field_HaltReason = "327";
-const std::string Field_MarketDepth = "264";
 
-void string_split_optim(std::vector<std::string>& output, const std::string& s, const char delimiter)
+void string_split_optim(std::vector<std::string_view>& output, std::string_view s, const char delimiter)
 {
     size_t start = 0;
     size_t end = s.find_first_of(delimiter);
@@ -48,7 +18,7 @@ void string_split_optim(std::vector<std::string>& output, const std::string& s, 
     }
 }
 
-void MDSecurityStatus::update(const std::string& message)
+void MDSecurityStatus::update(std::string_view message)
 {
 
     string_split_optim(fieldssplit, message, FIX_FIELD_DELIMITER);
@@ -71,20 +41,20 @@ void MDSecurityStatus::update(const std::string& message)
         else if (kv[KEY] == Field_Asset)
             this->Asset = kv[VALUE];
         else if (kv[KEY] == Field_SecurityID)
-            this->SecurityID = stoi(kv[VALUE]);
+            this->SecurityID = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_SecurityTradingStatus)
-            this->SecurityTradingStatus = stoi(kv[VALUE]);
+            this->SecurityTradingStatus = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_HaltReason)
-            this->HaltReason = stoi(kv[VALUE]);
+            this->HaltReason = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_SecurityTradingEvent)
-            this->SecurityTradingEvent = stoi(kv[VALUE]);
+            this->SecurityTradingEvent = stoi(std::string(kv[VALUE]));
 
         kv.clear();
     }
     fieldssplit.clear();
 }
 
-void MDIncrementalRefresh::update(const std::string& message)
+void MDIncrementalRefresh::update(std::string_view message)
 {
     // Parse String
 
@@ -105,9 +75,9 @@ void MDIncrementalRefresh::update(const std::string& message)
         else if (kv[KEY] == Field_MatchEventIndicator)
             this->MatchEventIndicator = kv[VALUE];
         else if (kv[KEY] == Field_NoMDEntries)
-            this->NoMDEntries = stoi(kv[VALUE]);
+            this->NoMDEntries = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_NoOrderIDEntries)
-            this->NoOrderIDEntries = stoi(kv[VALUE]);
+            this->NoOrderIDEntries = stoi(std::string(kv[VALUE]));
 
         // Repeating Group :: MDEntry
 
@@ -118,35 +88,35 @@ void MDIncrementalRefresh::update(const std::string& message)
         } else if (kv[KEY] == Field_MDEntryType)
             currentMDEntry->MDEntryType = kv[VALUE][STR_TO_CHAR];
         else if (kv[KEY] == Field_SecurityID)
-            currentMDEntry->SecurityID = stoi(kv[VALUE]);
+            currentMDEntry->SecurityID = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_Symbol)
             currentMDEntry->Symbol = kv[VALUE];
         else if (kv[KEY] == Field_RptSeq)
-            currentMDEntry->RptSeq = stoi(kv[VALUE]);
+            currentMDEntry->RptSeq = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_MDEntryPx)
-            currentMDEntry->MDEntryPx = stod(kv[VALUE]);
+            currentMDEntry->MDEntryPx = stod(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_MDEntrySize)
-            currentMDEntry->MDEntrySize = stoi(kv[VALUE]);
+            currentMDEntry->MDEntrySize = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_NumberOfOrders)
-            currentMDEntry->NumberOfOrders = stoi(kv[VALUE]);
+            currentMDEntry->NumberOfOrders = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_MDPriceLevel)
-            currentMDEntry->MDPriceLevel = stoi(kv[VALUE]);
+            currentMDEntry->MDPriceLevel = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_OpenCloseSettlFlag)
-            currentMDEntry->OpenCloseSettlFlag = stoi(kv[VALUE]);
+            currentMDEntry->OpenCloseSettlFlag = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_SettlPriceType)
             currentMDEntry->SettlPriceType = kv[VALUE];
         else if (kv[KEY] == Field_AggressorSide)
-            currentMDEntry->AggressorSide = stoi(kv[VALUE]);
+            currentMDEntry->AggressorSide = stoi(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_TradingReferenceDate)
             currentMDEntry->TradingReferenceDate = kv[VALUE];
         else if (kv[KEY] == Field_HighLimitPrice)
-            currentMDEntry->HighLimitPrice = stod(kv[VALUE]);
+            currentMDEntry->HighLimitPrice = stod(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_LowLimitPrice)
-            currentMDEntry->LowLimitPrice = stod(kv[VALUE]);
+            currentMDEntry->LowLimitPrice = stod(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_MaxPriceVariation)
-            currentMDEntry->MaxPriceVariation = stod(kv[VALUE]);
+            currentMDEntry->MaxPriceVariation = stod(std::string(kv[VALUE]));
         else if (kv[KEY] == Field_ApplID)
-            currentMDEntry->ApplID = stoi(kv[VALUE]);
+            currentMDEntry->ApplID = stoi(std::string(kv[VALUE]));
 
         // Repeating Group :: OrderIDEntry
         else if (kv[KEY] == Field_OrderID) {
@@ -154,7 +124,7 @@ void MDIncrementalRefresh::update(const std::string& message)
             currentOrderIDEntry = &OrderIdEntries.back();
             currentOrderIDEntry->OrderID = kv[VALUE];
         } else if (kv[KEY] == Field_LastQty)
-            currentOrderIDEntry->LastQty = stol(kv[VALUE]);
+            currentOrderIDEntry->LastQty = stol(std::string(kv[VALUE]));
 
         kv.clear();
     }
@@ -167,7 +137,7 @@ void MDIncrementalRefresh::clear()
     this->OrderIdEntries.clear();
 }
 
-void MDInstrument::update(const std::string& message)
+void MDInstrument::update(std::string_view message)
 {
     // Parse String
     string_split_optim(fieldssplit, message, FIX_FIELD_DELIMITER);
@@ -182,9 +152,9 @@ void MDInstrument::update(const std::string& message)
         else if(kv[KEY] == Field_MarketDepth) {
             // default to assigning MaxDepth , otherwise Impl.
             if (MaxDepthSupported == 0) {
-               this->MaxDepthSupported = stoi(kv[VALUE]);
+               this->MaxDepthSupported = stoi(std::string(kv[VALUE]));
             } else {
-               this->MaxImplDepthSupported= stoi(kv[VALUE]);
+               this->MaxImplDepthSupported= stoi(std::string(kv[VALUE]));
             }
         }
 
