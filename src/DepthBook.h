@@ -1,9 +1,4 @@
-//
-// Created by Antoine Waugh on 12/04/2017.
-//
-
-#ifndef DEPTHBOOK_H
-#define DEPTHBOOK_H
+#pragma once
 
 #include "FIXDecoder.h"
 #include <map>
@@ -246,20 +241,19 @@ public:
            << book.getSendingTime() << ','
            << book.getSecurityTradingStatus() << ','
            << book.getMatchEventIndicator() << ','
-           << book.bids << ','
-           << book.asks << ','
+//           << book.bids << ','
+//           << book.asks << ','
            << book.bid1pDelta << ','
            << book.ask1pDelta << ','
            << book.bid1vDelta << ','
            << book.ask1vDelta << ','
            //           << book.bids.getVolumeDeltas(book.previousBids)
            //           << book.asks.getVolumeDeltas(book.previousAsks)
-           << book.trades << ','
-           << book.getLastRptSeq() << ','
-           << book.implBids << ','
-           << book.implAsks;
+//           << book.trades << ','
+           << book.getLastRptSeq() ;
+//           << book.implBids << ','
+//           << book.implAsks;
         return os;
     }
 };
 
-#endif //DEPTHBOOK_H

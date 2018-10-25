@@ -3,31 +3,15 @@
 //
 
 #include "FileProcessor.h"
+#include "Timer.h"
 #include <sstream>
 #include <fstream>
 #include <iomanip>
 #include <map>
 #include <string>
 #include <vector>
-#include <chrono>
 #include <iostream>
 #include <unordered_set>
-
-struct Timer {
-    Timer() {
-        m_start = std::chrono::steady_clock::now();
-    }
-
-    auto seconds_elapsed() {
-        auto end = std::chrono::steady_clock::now();
-        auto elapsed = end - m_start;
-        return std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-    }
-
-private:
-    std::chrono::time_point<std::chrono::steady_clock> m_start;
-
-};
 
 void writeHeaders(std::ostream& o, int maxDepth, int maxImpDepth)
 {
