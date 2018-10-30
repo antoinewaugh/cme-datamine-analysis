@@ -80,49 +80,31 @@ void FileProcessor::createOutfile(std::string symbol, int maxDepth, int maxImplD
 // maybe this is automatically handled by map's destructor?
 FileProcessor::~FileProcessor()
 {
-////    for (auto& o : outfiles_) {
-////        o.second.close();
-//    }
+    for (auto& o : outfiles_) {
+        o.second.close();
+    }
 }
 
 void FileProcessor::process(const std::vector<std::string>& filenames, const std::string& filter)
 {
 
     std::cout << "Filter: " << filter << std::endl;
+
     std::string message;
 
-    std::stringstream o;
     Decoder decoder;
     for (const auto& filename : filenames) {
 
         std::ifstream file(filename);
         if (file.is_open()) {
-
-            Timer timer;
             std::cout << "Opening : " << filename << std::endl;
-            std::stringstream content;
-            content << file.rdbuf();
-            std::string content_str = content.str();
-            std::string_view  content_view(content_str);
-            std::cout << "Opened file in: " << timer.seconds_elapsed() << std::endl;
 
-            int begin = 0, end = 0;
-            do {
-                end = content_view.find('\n', begin);
-                std::string_view message = content_view.substr(begin,end-begin);
-                begin = end+1;
-
-                // one decode
-                for (auto& kv: depthBooks_) {
-                    kv.second.clearFlags();
-                }
-
+            while(getline(file, message)) {
                 if (message.find("35=d") != std::string::npos) {
-//                     create instrument books & outfiles
+
                     MDInstrument instrument;
                     instrument.update(message);
                     createOutfile(instrument.Symbol, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported);
-
                     depthBooks_.emplace(instrument.Symbol, DepthBook(instrument.Symbol, instrument.SecurityGroup, instrument.MaxDepthSupported, instrument.MaxImplDepthSupported));
                 }
 
@@ -133,28 +115,42 @@ void FileProcessor::process(const std::vector<std::string>& filenames, const std
                 if(type == Decoder::Type::IncrementalRefresh) {
                     auto refresh = decoder.parseIncremental(message);
                     for(auto& entry: refresh.MDEntries) {
-                        depthBooks_[entry.Symbol].handleEntry(
+                        bool changed = depthBooks_[entry.Symbol].handleEntry(
                                 refresh.TransactTime,
                                 refresh.SendingTime,
                                 refresh.MatchEventIndicator,
                                 entry);
-                        updated.insert(entry.Symbol);
+                        if(changed)
+                            updated.insert(entry.Symbol);
                     }
                 } else if(type == Decoder::Type::SecurityStatus) {
+
                     auto status = decoder.parseStatus(message);
-                    // todo: update all entires
+
+                    for(auto& [symbol, book]: depthBooks_) {
+                       bool changed = book.handleStatus(status.TransactTime,
+                               status.SendingTime,
+                               status.MatchEventIndicator,
+                               status);
+                       if(changed)
+                           updated.insert(symbol);
+                    }
                 }
 
                 // one decode
                 for (auto& symbol : updated) {
-                     if(filename.find(filter) == std::string::npos) { continue;}
-                    // auto &file = outfiles_[symbol];
-                     auto &book= depthBooks_[symbol];
-                     //file << book << '\n';
-                     o << book;
+
+                    auto &book = depthBooks_[symbol];
+
+                    if(filename.find(filter) != std::string::npos) {
+                         auto &file = outfiles_[symbol];
+                         book.commit();
+                         file << book << '\n';
+                    }
+                    // need to clear irrespective of whether filename in filter
+                    book.clearFlags();
                 }
-            } while(end != std::string::npos);
-            std::cout << "Decoded file in: " << timer.seconds_elapsed() << std::endl;
+            }
         }
     }
 }

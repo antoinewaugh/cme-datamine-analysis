@@ -172,17 +172,27 @@ void DepthBook::resetState()
     implAsks.reset();
 }
 
+bool DepthBook::handleStatus(std::string_view transactTime,
+                            std::string_view sendingTime,
+                            std::string_view matchEventIndicator,
+                            MDSecurityStatus const& status) {
+
+    if (status.SecurityGroup == this->securityGroup) {
+
+        this->timestamp = transactTime;
+        this->sendingtime = sendingTime;
+        this->matchEventIndicator = matchEventIndicator;
+        setSecurityStatus(status.SecurityTradingStatus);
+
+        return true;
+    }
+    return false;
+}
+
 bool DepthBook::handleEntry(std::string_view transactTime,
         std::string_view sendingTime,
         std::string_view matchEventIndicator,
         MDEntry const& entry) {
-
-    clearFlags();
-
-    double prevBid1p = bids.getBestEntry().price;
-    double prevBid1v = bids.getBestEntry().quantity;
-    double prevAsk1p = asks.getBestEntry().price;
-    double prevAsk1v = asks.getBestEntry().quantity;
 
     this->timestamp = transactTime;
     this->sendingtime = sendingTime;
@@ -198,28 +208,29 @@ bool DepthBook::handleEntry(std::string_view transactTime,
         case MDEntryType_BID:
             bids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
             this->lastRptSeq = entry.RptSeq;
-            break;
+            return true;
 
         case MDEntryType_OFFER:
             asks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
             this->lastRptSeq = entry.RptSeq;
-            break;
+            return true;
 
         case MDEntryType_IMPLIED_BID:
             implBids.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
             this->lastRptSeq = entry.RptSeq;
-            break;
+            return true;
 
         case MDEntryType_IMPLIED_OFFER:
             implAsks.insert(entry.MDEntryPx, entry.MDEntrySize, entry.MDPriceLevel, entry.MDUpdateAction);
             this->lastRptSeq = entry.RptSeq;
-            break;
+            return true;
 
         case MDEntryType_TRADE:
             trades.insert(entry.MDEntryPx, entry.MDEntrySize, entry.AggressorSide);
             this->lastRptSeq = entry.RptSeq;
-            break;
+            return true;
     }
+    return false;
 }
 
 bool DepthBook::handleMessage(std::string_view s)
@@ -326,4 +337,20 @@ void DepthBook::setSecurityStatus(int status) {
     if (status != 103) {
         securityTradingStatus = status;
     }
+}
+
+void DepthBook::commit() {
+
+    if (prevBid1p > 0.0 and prevAsk1p > 0.0) {
+            this->bid1pDelta = bids.getBestEntry().price - prevBid1p;
+            this->bid1vDelta = bids.getBestEntry().quantity - prevBid1v;
+            this->ask1pDelta = asks.getBestEntry().price - prevAsk1p;
+            this->ask1vDelta = asks.getBestEntry().quantity - prevAsk1v;
+    }
+
+    prevBid1p = bids.getBestEntry().price;
+    prevBid1v = bids.getBestEntry().quantity;
+    prevAsk1p = asks.getBestEntry().price;
+    prevAsk1v = asks.getBestEntry().quantity;
+
 }

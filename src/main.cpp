@@ -16,53 +16,6 @@ void usage()
                  "ls /path/to/cme-datapoint-files | xargs ./depthbook-constructor\n\n";
 }
 
-// perf
-
-int main() {
-
-   Decoder decoder;
-
-   Timer timer;
-
-   std::string inst = "ESM7";
-   std::string group = "ES";
-
-   DepthBook book(inst, group, 10, 2);
-   MDIncrementalRefresh last;
-
-   std::vector<std::string> files;
-   files.push_back("/home/twanas/workspace/antoinewaugh/cme-datamine-analysis/sample-input/xcme_md_es_fut_20170312-r-00369");
-   files.push_back("/home/twanas/workspace/antoinewaugh/cme-datamine-analysis/sample-input/xcme_md_es_fut_20170313-r-00369");
-
-
-   std::ofstream ofile("ESH7.csv");
-    std::stringstream ss;
-   for(auto& filename: files) {
-
-       std::ifstream file(filename);
-       if (file.is_open()) {
-           std::string message;
-           while (getline(file, message)) {
-//                         auto type = decoder.headerType(message);
-//                         if(type == Decoder::Type::IncrementalRefresh) {
-               if(book.handleMessage(message)) {
-                   ss << book << '\n';
-               }
-//                             last = decoder.parseIncremental(message);
-
-//                         }
-           }
-       }
-   }
-
-   std::cout << timer.seconds_elapsed() << std::endl;
-   ofile << ss.rdbuf();
-    std::cout << timer.seconds_elapsed() << std::endl;
-}
-
-
-
-/*
 int main(int argc, char* argv[])
 {
     std::ios_base::sync_with_stdio(false);
@@ -86,9 +39,3 @@ int main(int argc, char* argv[])
 
 } // main
 
- */
-
-/*
- *  if no matches 3 seconds to run
- *
- * */

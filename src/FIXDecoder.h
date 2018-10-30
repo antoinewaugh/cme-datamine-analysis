@@ -93,10 +93,10 @@ public:
     std::string_view SecurityGroup;
     std::string_view Asset;
 
-    int SecurityID;
-    int SecurityTradingStatus;
-    int HaltReason;
-    int SecurityTradingEvent;
+    int SecurityID = 0;
+    int SecurityTradingStatus = 0;
+    int HaltReason = 0;
+    int SecurityTradingEvent = 0;
 
     std::vector<std::string_view> fieldssplit;
     std::vector<std::string_view> kv;
@@ -171,6 +171,7 @@ public:
 
     MDSecurityStatus const&
     parseStatus(std::string_view message) {
+        m_status = MDSecurityStatus();
         m_status.update(message);
         return m_status;
     }

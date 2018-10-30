@@ -173,6 +173,11 @@ private:
     double bid1vDelta;
     double ask1vDelta;
 
+    double prevBid1p = 0;
+    double prevBid1v = 0;
+    double prevAsk1p = 0;
+    double prevAsk1v = 0;
+
     TradeList trades;
 
     long lastRptSeq;
@@ -206,10 +211,16 @@ public:
     DepthBook() = default;
 
     void clearFlags();
+    void commit();
     bool handleEntry(std::string_view transactTime,
                                 std::string_view sendingTime,
                                 std::string_view matchEventIndicator,
                                 MDEntry const& entry);
+
+    bool handleStatus(std::string_view transactTime,
+                                 std::string_view sendingTime,
+                                 std::string_view matchEventIndicator,
+                                 MDSecurityStatus const& status);
 
     const std::string& getTimestamp() const
     {
@@ -241,18 +252,18 @@ public:
            << book.getSendingTime() << ','
            << book.getSecurityTradingStatus() << ','
            << book.getMatchEventIndicator() << ','
-//           << book.bids << ','
-//           << book.asks << ','
+           << book.bids << ','
+           << book.asks << ','
            << book.bid1pDelta << ','
            << book.ask1pDelta << ','
            << book.bid1vDelta << ','
            << book.ask1vDelta << ','
            //           << book.bids.getVolumeDeltas(book.previousBids)
            //           << book.asks.getVolumeDeltas(book.previousAsks)
-//           << book.trades << ','
-           << book.getLastRptSeq() ;
-//           << book.implBids << ','
-//           << book.implAsks;
+           << book.trades << ','
+           << book.getLastRptSeq() << ','
+           << book.implBids << ','
+           << book.implAsks;
         return os;
     }
 };
